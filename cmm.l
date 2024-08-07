@@ -35,5 +35,46 @@
 "sizeof"        { return SIZEOF; }
 "signed"        { return SIGNED; }
 "unsigned"      { return UNSIGNED; }
+"("             { return LPARAM; }
+")"             { return RPARAM; }
+"["             { return LBRACK; }
+"]"             { return RBRACK; }
+"{"             { return LBRACE; }
+"}"             { return RBRACE; }
+"."             { return DOT; }
+"!"             { return NOT; }
+"^"             { return XOR; }
+"++"            { return INC; }
+"--"            { return DEC; }
+"&"             { return ADDR; }
+"*"             { return MUL; }
+"/"             { return DIV;}
+"%"             { return MOD; }
+"+"             { return ADD; }
+"-"             { return SUB; }
+"<<"            { return LSHIFT; }
+">>"            { return RSHIFT; }
+"<"             { return LT; }
+"<="            { return LE; }
+">"             { return GT; }
+">="            { return GE; }
+"=="            { return EQ; }
+"!="            { return NE; }
+"|"             { return BITOR; }
+"+="            { return ADDASSIGN; }
+"-="            { return SUBASSIGN; }
+"*="            { return MULASSIGN; }
+"/="            { return DIVASSIGN; }
+"&="            { return ANDASSIGN; }
+"|="            { return ORASSIGN;  }
+"^="            { return XORASSIGN; }
+"?"             { return QUES; }
+":"             { return COLON; }
+"&&"            { return LOGAND; }
+"||"            { return LOGOR; }
+"<<="           { return LSHIFTASSIGN; }
+">>="           { return RSHIFTASSIGN; }
+","             { return COMMA; }
+"~"             { return BITNOT; }
 
 %%
