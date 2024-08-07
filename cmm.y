@@ -28,6 +28,8 @@
 %left COMMA
 %nonassoc UMINUS
 
+%token SYMBOL
+
 %start program
 
 %%
