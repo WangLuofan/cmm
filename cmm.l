@@ -1,5 +1,6 @@
 %{
     #include "cmm.tab.h"
+    #include "cmm-def.h"
 %}
 
 %%
@@ -45,6 +46,7 @@
 "!"                                                                         { return NOT; }
 "^"                                                                         { return XOR; }
 "++"                                                                        { return INC; }
+"->"                                                                        { return POINTTO; }
 "--"                                                                        { return DEC; }
 "&"                                                                         { return ADDR; }
 "*"                                                                         { return MUL; }
@@ -76,6 +78,7 @@
 ">>="                                                                       { return RSHIFTASSIGN; }
 ","                                                                         { return COMMA; }
 "~"                                                                         { return BITNOT; }
+";"                                                                         { return SEMICOLON; }
 
 0[1-7][0-7]+                                                                { return INT; }
 0|[1-9][0-9]+                                                               { return INT; }
