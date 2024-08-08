@@ -9,7 +9,9 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceRoot}/cmm",
-            "args": [],
+            "args": [
+                "${workspaceRoot}/test.c"
+            ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

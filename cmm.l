@@ -1,7 +1,11 @@
 %{
     #include "cmm.tab.h"
     #include "cmm-def.h"
+
+    #include <stdio.h>
 %}
+
+%option noyywrap
 
 %%
 
@@ -80,11 +84,14 @@
 "~"                                                                         { return BITNOT; }
 ";"                                                                         { return SEMICOLON; }
 
-0[1-7][0-7]+                                                                { return INT; }
-0|[1-9][0-9]+                                                               { return INT; }
-0[b|B][0|1]+                                                                { return INT; }
-0[x|X][0-9a-fA-F]+                                                          { return INT; }
+0[1-7][0-7]*                                                                { return NUMBER; }
+0|[1-9][0-9]*[l|L|ul|UL|LL|ULL]?                                            { return NUMBER; }
+0[b|B][0|1]+                                                                { return NUMBER; }
+0[x|X][0-9a-fA-F]+                                                          { return NUMBER; }
 
 _+[0-9]+[a-zA-Z0-9]+|_*[a-zA-Z_]+[0-9a-zA-Z_]+                              { return SYMBOL; }
+
+\s|\n                                                                       { }
+<<EOF>>                                                                     { }
 
 %%
