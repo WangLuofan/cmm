@@ -49,16 +49,4 @@ typedef enum AssignOper {
     AssignOper_RShiftAssign
 }AssignOper;
 
-typedef enum TypeKind {
-    TypeKind_Void,
-    TypeKind_Char,
-    TypeKind_Short,
-    TypeKind_Int,
-    TypeKind_Long,
-    TypeKind_LongLong,
-    TypeKind_Float,
-    TypeKind_Double,
-    TypeKind_LongDouble
-}TypeKind;
-
 #endif
