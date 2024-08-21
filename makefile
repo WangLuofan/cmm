@@ -2,7 +2,7 @@ cmm: cmm.c cmm.tab.c cmm.lex.c
 	gcc -g -o $@ cmm.c cmm.tab.c cmm.lex.c -lfl
 
 cmm.tab.c: cmm.y
-	bison -d cmm.y
+	bison -d -o $@ cmm.y
 
 cmm.lex.c: cmm.l
 	flex -o $@ cmm.l
