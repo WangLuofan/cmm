@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 extern FILE* yyin;
+extern int yydebug;
 extern int yyparse(void);
 
 void yyerror(const char *msg) {
@@ -21,6 +22,8 @@ int main(int argc, char **argv) {
     yyerror("no shuch file or directory");
     return -1;
   }
+
+  yydebug = 1;
 
   int ret = yyparse();
   if (yyin) {
