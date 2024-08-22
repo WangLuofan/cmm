@@ -6,4 +6,5 @@ C Minus Minus Compiler
 2. 添加从文件中读取源代码的相关逻辑
 
 ## 2024/8/22
-1. 实现int a;声明
+1. 实现 **int a;** 声明  [<font color="green">完成时间: 2024/08/22 23:05</font>]
+

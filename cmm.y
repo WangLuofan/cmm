@@ -1,16 +1,18 @@
 %{
     #include "ast.h"
     #include "type.h"
+    #include "context.h"
     
     extern int yylex(void);
-    extern void yyerror(const char *);
+    extern void yyerror(struct Context*, const char *);
 
     #define YYDEBUG 1
     extern int yydebug;
 %}
 
+%parse-param { struct Context *context }
+
 %union {
-    char name[512];
     struct ASTNode *node;
 }
 
@@ -23,7 +25,7 @@
 
 %%
 
-program: declaration    { $$ = $1; }
+program: declaration    { context->prog = $1; }
 
 declaration: INT IDENT SEMICOLON {
     $$ = newast_decl(ty_int, $2, NULL);

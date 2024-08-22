@@ -14,6 +14,8 @@ typedef struct Type {
     int is_signed;
 }Type;
 
+struct Type *copy_type(struct Type *);
+
 extern struct Type *ty_int;
 
 #endif

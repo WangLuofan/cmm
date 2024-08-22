@@ -21,6 +21,7 @@ struct ASTNode *newast_num(int val) {
 
 struct ASTNode *newast_var(char *name) {
     struct ASTNodeVar *var = (struct ASTNodeVar *)malloc(sizeof(struct ASTNodeVar));
+    var->ast.kind = NodeKind_Variable;
     var->name = strdup(name);
     return var;
 }
@@ -29,6 +30,7 @@ struct ASTNode *newast_decl(struct Type *ty, struct ASTNode *var, struct ASTNode
     struct ASTNodeDecl *decl = (struct ASTNodeDecl *)malloc(sizeof(struct ASTNodeDecl));
 
     decl->ast.kind = NodeKind_Decl;
+    decl->ty = copy_type(ty);
     decl->ast.left = var;
     decl->ast.right = val;
 
