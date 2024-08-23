@@ -18,23 +18,31 @@
 %union {
     char name[512];
     unsigned long long ivar;
+    struct Type *ty;
     struct ASTNode *node;
 }
 
-%token INT
+%token <ty> INT VOID
 %token <name> IDENT
 %token SEMICOLON, COMMA, EQUAL
-%token <ivar> NUMBER
+%token <ivar> NUMBER 
+%token LPARAM RPARAM LBRACE RBRACE LBRACK RBRACK
 
-%type <node> program decl_list variable var_list
-%start program
+%type <node> program var_decl variable var_list func_decl
+%start accept
 
 %%
 
-program: decl_list    { context->prog = $1; }
+accept: program {
+        context->prog = $1;
+    }
 
-decl_list: INT var_list SEMICOLON {
-                $$ = newast_decl(ty_int, $2);
+program: 
+    | program var_decl    { $$ = newast_list($2, $1); }
+    | program func_decl { $$ = newast_list($2, $1); }
+
+var_decl: INT var_list SEMICOLON {
+                $$ = newast_vardecl($1, $2);
             }
 
 variable: IDENT {
@@ -49,6 +57,13 @@ var_list: variable {
     }
     | var_list COMMA variable {
         $$ = newast_list($3, $1);
+    }
+
+func_decl: VOID IDENT LPARAM RPARAM LBRACE RBRACE {
+        $$ = newast_function($1, $2, NULL, NULL);
+    }
+    | VOID IDENT LPARAM VOID RPARAM LBRACE RBRACE {
+        $$ = newast_function($1, $2, NULL, NULL);
     }
 
 %%

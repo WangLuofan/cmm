@@ -7,7 +7,14 @@
 
 %%
 
-"int"                                                       { return INT; }
+"int"                                                       { yylval.ty = ty_int; return INT; }
+"void"                                                      { yylval.ty = ty_void; return VOID; }
+"{"                                                         { return LBRACE; }
+"}"                                                         { return RBRACE; }
+"("                                                         { return LPARAM; }
+")"                                                         { return RPARAM; }
+"["                                                         { return LBRACK; }
+"]"                                                         { return RBRACK; }
 ";"                                                         { return SEMICOLON; }
 ","                                                         { return COMMA; }
 "="                                                         { return EQUAL; }

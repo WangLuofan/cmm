@@ -16,6 +16,7 @@ typedef struct Type {
 
 struct Type *copy_type(struct Type *);
 
+extern struct Type *ty_void;
 extern struct Type *ty_int;
 
 #endif
