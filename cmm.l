@@ -9,8 +9,11 @@
 
 "int"                                                       { return INT; }
 ";"                                                         { return SEMICOLON; }
+","                                                         { return COMMA; }
+"="                                                         { return EQUAL; }
 
-[_a-zA-Z]+[_0-9a-zA-Z]?                                     { yylval.node = newast_var(yytext); return IDENT; }
+0|[1-9]+[0-9]*                                              { yylval.ivar = atoi(yytext); return NUMBER; }
+[_a-zA-Z]+[_0-9a-zA-Z]*                                     { strcpy(yylval.name, yytext); return IDENT; }
 
 <<EOF>>                                                     { yyterminate(); }
 

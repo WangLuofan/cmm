@@ -12,16 +12,30 @@ void emit_prog(FILE *fp, struct ASTNode *prog) {
         case NodeKind_Decl: {
             struct ASTNodeDecl *decl = (struct ASTNodeDecl *)prog;
 
-            struct ASTNodeVar *var = (struct ASTNodeVar *)decl->ast.left;
-            fprintf(fp, "\t.globl %s\n", var->name);
-            fprintf(fp, "\t.type %s, @object\n");
-            fprintf(fp, "\t.align %d\n", decl->ty->align);
-            fprintf(fp, "%s:\n", var->name);
+            struct ASTNodeList *varlist = (struct ASTNodeList *)decl->ast.left;
+            while (varlist && varlist->node) {
+                struct ASTNodeVar *var = (struct ASTNodeVar *)varlist->node;
 
-            if (decl->ast.right == NULL) {
-                fprintf(fp, "\t.zero %d\n", align_to(decl->ty->size, decl->ty->align));
+                fprintf(fp, "\t.globl %s\n", var->name);
+                fprintf(fp, "\t.type %s, @object\n");
+                fprintf(fp, "\t.align %d\n", decl->ty->align);
+                fprintf(fp, "%s:\n", var->name);
+
+                if (var->val == NULL) {
+                    fprintf(fp, "\t.zero %d\n", align_to(decl->ty->size, decl->ty->align));
+                } else {
+                    switch (var->val->kind) {
+                        case NodeKind_Number: {
+                            struct ASTNodeNum *num = (struct ASTNodeNum *)var->val;
+                            fprintf(fp, "   \t.long %d\n", num->ival);
+                        }
+                            break;
+                    }
+                }
+                fprintf(fp, "\n");
+
+                varlist = varlist->next;
             }
-            fprintf(fp, "\n");
         }
             break;
     }
