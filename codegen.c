@@ -5,17 +5,24 @@
 
 void prologue(FILE *fp, int stack_size) {
     fprintf(fp, "\tendbr64\n");
-    fprintf(fp, "\tpushq %rbp\n");
-    fprintf(fp, "\tmovq %rsp, %rbp\n");
+    fprintf(fp, "\tpushq %%rbp\n");
+    fprintf(fp, "\tmovq %%rsp, %%rbp\n");
 
     if (stack_size) {
-        fprintf(fp, "\tsubq $%d, %rbp\n", align_to(stack_size, 16));
+        fprintf(fp, "\tsubq $%d, %%rbp\n", align_to(stack_size, 16));
     }
 }
 
 void epilogue(FILE *fp) {
-    fprintf(fp, "\tpopq %rbp\n");
+    fprintf(fp, "\tpopq %%rbp\n");
     fprintf(fp, "\tretq\n");
+}
+
+void emit_stmt(FILE *fp, struct ASTNode *stmts) {
+    if (stmts == NULL) {
+        fprintf(fp, "\tnop\n");
+        return ;
+    }
 }
 
 void emit_text(FILE *fp, struct ASTNode *prog) {
@@ -34,7 +41,11 @@ void emit_text(FILE *fp, struct ASTNode *prog) {
         fprintf(fp, "%s:\n", func->name);
 
         prologue(fp, 0);
+
+        emit_stmt(fp, func->ast.right);
+
         epilogue(fp);
+        fprintf(fp, "\n");
 
         prog_list = prog_list->next;
     }
@@ -86,7 +97,7 @@ void emit_prog(FILE *fp, struct ASTNode *prog) {
     }
 
     emit_text(fp, prog);
-    fprintf(fp, "\n");
+
     emit_data(fp, prog);
 }
 

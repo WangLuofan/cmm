@@ -15,4 +15,5 @@ C Minus Minus Compiler
 2. 实现 **int a, b = 1, c;** 形式的声明
 
 ## 2024/08/24
-1. 实现 **void fn(void) { }**  空函数、空返回值的定义
+1. 实现 **void fn(void) { }**  无返回值、空参数列表、空函数体的定义
+2. 实现 **void fn(int, int, int, int, int, int) {}** 无返回值、少于6个参数、空函数体的定义

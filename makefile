@@ -1,4 +1,4 @@
-OBJS=ast.o type.o codegen.o utils.o
+OBJS=ast.o type.o codegen.o utils.o hashmap.o
 
 cmm: main.c cmm.tab.c cmm.lex.c $(OBJS)
 	gcc -g -o $@ main.c cmm.tab.c cmm.lex.c -lfl $(OBJS)
@@ -20,6 +20,9 @@ codegen.o: ast.h utils.h codegen.c
 
 utils.o: utils.c
 	gcc -g -c -o $@ utils.c
+
+hashmap.o: hashmap.c
+	gcc -g -c -o $@ hashmap.c
 
 clean:
 	rm -rf cmm.lex.c cmm.tab.h cmm.tab.c cmm *.o *.s
