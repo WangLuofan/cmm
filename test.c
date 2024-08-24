@@ -8,6 +8,6 @@ void fn2(void) {
 
 }
 
-void fn3(int a, int b, int c) {
+void fn3(int a, int b, int c, int d, int e, int f) {
 
 }
