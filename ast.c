@@ -20,31 +20,43 @@ struct ASTNode *newast_num(uint64_t val) {
     return num;
 }
 
-struct ASTNode *newast_var(char *name, struct ASTNode *val) {
+struct ASTNode *newast_var(char *name, struct Type *ty, struct ASTNode *val) {
     struct ASTNodeVar *var = (struct ASTNodeVar *)malloc(sizeof(struct ASTNodeVar));
     
     var->ast.kind = NodeKind_Variable;
     var->name = strdup(name);
     var->val = val;
+    var->ty = copy_type(ty);
 
     return var;
 }
 
 struct ASTNode *newast_vardecl(struct Type *ty, struct ASTNode *var) {
-    struct ASTNodeVarDecl *decl = (struct ASTNodeVarDecl *)malloc(sizeof(struct ASTNodeVarDecl));
-
-    decl->ast.kind = NodeKind_VarDecl;
-    decl->ty = copy_type(ty);
-    decl->ast.left = var;
-
-    return decl;
+    struct ASTNodeList *var_list = (struct ASTNodeList *)var;
+    while (var_list && var_list->node) {
+        ((struct ASTNodeVar *)var_list->node)->ty = copy_type(ty);
+        var_list = var_list->next;
+    }    
+    return var;
 }
 
-struct ASTNode *newast_list(struct ASTNode *node, struct ASTNode *next) {
-    struct ASTNodeList *list = (struct ASTNodeList *)malloc(sizeof(struct ASTNodeList));
+struct ASTNode *newast_list(struct ASTNode *list, struct ASTNode *node) {
+    struct ASTNodeList *next = (struct ASTNodeList *)malloc(sizeof(struct ASTNodeList));
 
-    list->node = node;
-    list->next = next;
+    next->node = node;
+    next->next = NULL;
+
+    if (list == NULL) {
+        return next;
+    }
+
+    struct ASTNodeList *cur = list, *prev = NULL;
+    while (cur) {
+        prev = cur;
+        cur = cur->next;
+    }
+
+    prev->next = next;
 
     return list;
 }

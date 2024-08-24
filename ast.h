@@ -9,7 +9,6 @@ typedef enum NodeKind {
     NodeKind_NullExpr,
     NodeKind_Variable,
     NodeKind_Number,
-    NodeKind_VarDecl,
     NodeKind_Function,
 }NodeKind;
 
@@ -25,6 +24,9 @@ typedef struct ASTNodeVar {
 
     const char *name;
     struct ASTNode *val;
+    struct Type *ty;
+
+    int offset;
 }ASTNodeVar;
 
 typedef struct ASTNodeList {
@@ -39,11 +41,6 @@ typedef struct ASTNodeNum {
     uint64_t ival;
 }ASTNodeNum;
 
-typedef struct ASTNodeVarDecl {
-    struct ASTNode ast;
-    struct Type *ty;
-}ASTNodeDecl;
-
 typedef struct ASTNodeFunction {
     struct ASTNode ast;
 
@@ -53,7 +50,7 @@ typedef struct ASTNodeFunction {
 
 struct ASTNode *newast(NodeKind, struct ASTNode *, struct ASTNode *);
 struct ASTNode *newast_list(struct ASTNode *, struct ASTNode *);
-struct ASTNode *newast_var(char *, struct ASTNode *);
+struct ASTNode *newast_var(char *, struct Type *, struct ASTNode *);
 struct ASTNode *newast_num(uint64_t);
 struct ASTNode *newast_vardecl(struct Type *, struct ASTNode *);
 struct ASTNode *newast_function(struct Type *, const char *, struct ASTNode *, struct ASTNode *);

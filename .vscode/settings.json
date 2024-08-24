@@ -2,6 +2,7 @@
     "editor.tabSize": 4,
     "editor.detectIndentation": false,
     "files.associations": {
-        "codegen.h": "c"
+        "codegen.h": "c",
+        "__node_handle": "c"
     }
 }

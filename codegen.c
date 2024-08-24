@@ -56,23 +56,22 @@ void emit_data(FILE *fp, struct ASTNode *prog) {
     fprintf(fp, "\t.data\n");
     struct ASTNodeList *prog_list = (struct ASTNodeList *)prog;
     while (prog_list && prog_list->node) {
-        if (prog_list->node->kind != NodeKind_VarDecl) {
+        if (prog_list->node->kind == NodeKind_Function) {
             prog_list = prog_list->next;
             continue;
         }
 
-        struct ASTNodeVarDecl *decl = (struct ASTNodeVarDecl *)prog_list->node;
-        struct ASTNodeList *varlist = (struct ASTNodeList *)decl->ast.left;
+        struct ASTNodeList *varlist = (struct ASTNodeList *)prog_list->node;
         while (varlist && varlist->node) {
             struct ASTNodeVar *var = (struct ASTNodeVar *)varlist->node;
 
             fprintf(fp, "\t.globl %s\n", var->name);
             fprintf(fp, "\t.type %s, @object\n");
-            fprintf(fp, "\t.align %d\n", decl->ty->align);
+            fprintf(fp, "\t.align %d\n", var->ty->align);
             fprintf(fp, "%s:\n", var->name);
 
             if (var->val == NULL) {
-                fprintf(fp, "\t.zero %d\n", align_to(decl->ty->size, decl->ty->align));
+                fprintf(fp, "\t.zero %d\n", align_to(var->ty->size, var->ty->align));
             } else {
                 switch (var->val->kind) {
                     case NodeKind_Number: {
