@@ -105,14 +105,14 @@ struct HashEntry *get_or_insert_entry(struct HashMap *hash_map, const char *key,
         }
 
         if (entry->key == TOMBSTONE) {
-            entry->key = key;
+            entry->key = strdup(key);
             entry->keyLen = keylen;
 
             return entry;
         }
 
         if (entry->key == NULL) {
-            entry->key = key;
+            entry->key = strdup(key);
             entry->keyLen = keylen;
             ++hash_map->used;
 

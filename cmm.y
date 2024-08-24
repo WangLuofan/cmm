@@ -24,7 +24,7 @@
 
 %token <ty> INT VOID
 %token <name> IDENT
-%token SEMICOLON, COMMA, EQUAL
+%token SEMICOLON COMMA EQUAL
 %token <ivar> NUMBER 
 %token LPARAM RPARAM LBRACE RBRACE LBRACK RBRACK
 
@@ -75,8 +75,7 @@ func_param: { $$ = NULL; }
         $$ = newast_var($2, $1, NULL);
     }
 
-func_param_list: { $$ = NULL; }
-    | func_param {
+func_param_list: func_param {
         $$ = newast_list(NULL, $1);
     }
     | func_param_list COMMA func_param {
