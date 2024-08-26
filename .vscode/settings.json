@@ -3,6 +3,7 @@
     "editor.detectIndentation": false,
     "files.associations": {
         "codegen.h": "c",
-        "__node_handle": "c"
+        "__node_handle": "c",
+        "typeinfo": "c"
     }
 }

@@ -5,23 +5,23 @@
 
 #define GP_MAX 6
 
-static const char *reg8[] = {"%%dil", "%%sil", "%%dl", "%%cl", "%%r8b", "%%r9b"};
-static const char *reg16[] = {"%%di", "%%si", "%%dx", "%%cx", "%%r8w", "%%r9w"};
-static const char *reg32[] = {"%%edi", "%%esi", "%%edx", "%%ecx", "%%r8d", "%%r9d"};
-static const char *reg64[] = {"%%rdi", "%%rsi", "%%rdx", "%%rcx", "%%r8", "%%r9"};
+static const char *reg8[] = {"%dil", "%sil", "%dl", "%cl", "%r8b", "%r9b"};
+static const char *reg16[] = {"%di", "%si", "%dx", "%cx", "%r8w", "%r9w"};
+static const char *reg32[] = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
+static const char *reg64[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 
 void prologue(FILE *fp, int stack_size) {
     fprintf(fp, "\tendbr64\n");
-    fprintf(fp, "\tpushq %%rbp\n");
-    fprintf(fp, "\tmovq %%rsp, %%rbp\n");
+    fprintf(fp, "\tpushq\t\t%%rbp\n");
+    fprintf(fp, "\tmovq\t\t%%rsp, %%rbp\n");
 
     if (stack_size) {
-        fprintf(fp, "\tsubq $%d, %%rbp\n", align_to(stack_size, 16));
+        fprintf(fp, "\tsubq\t\t$%d, %%rbp\n", align_to(stack_size, 16));
     }
 }
 
 void epilogue(FILE *fp) {
-    fprintf(fp, "\tpopq %%rbp\n");
+    fprintf(fp, "\tpopq\t\t%%rbp\n");
     fprintf(fp, "\tretq\n");
 }
 
@@ -32,15 +32,25 @@ void emit_stmt(FILE *fp, struct ASTNode *stmts) {
     }
 }
 
-void align_lvar_offsets(struct ASTNodeFunction *func) {
+void assign_lvar_offsets(struct ASTNodeFunction *func) {
     if (func == NULL) {
         return ;
     }
 
     struct ASTNodeList *paramlist = (struct ASTNodeList *)func->ast.left;
 
-    int argcnt = 0;
+    int gp = 0, bottom = 0, top = 16;
     while (paramlist && paramlist->node) {
+        struct ASTNodeVar *var = (struct ASTNodeVar *)paramlist->node;
+        if (gp < GP_MAX) {
+            bottom += align_to(var->ty->size, var->ty->align);
+            var->offset = -bottom;
+        } else {
+            var->offset = top;
+            top += align_to(var->ty->size, 8);
+        }
+
+        ++gp;
         paramlist = paramlist->next;
     }
 }
@@ -66,7 +76,7 @@ void store_gp(FILE *fp, struct ASTNodeList *params) {
                 }
                     break;
                 case 4: {
-                    fprintf(fp, "\tmovl %s, %d(%%rbp)\n", reg32[gp], var->offset);
+                    fprintf(fp, "\tmovl\t\t%s, %d(%%rbp)\n", reg32[gp], var->offset);
                 }
                     break;
                 case 8: {
@@ -96,11 +106,11 @@ void emit_text(FILE *fp, struct ASTNode *prog) {
         }
 
         struct ASTNodeFunction *func = (struct ASTNodeFunction *)prog_list->node;
-        fprintf(fp, "\t.globl %s\n", func->name);
-        fprintf(fp, "\t.type %s, @function\n", func->name);
+        fprintf(fp, "\t.globl\t\t%s\n", func->name);
+        fprintf(fp, "\t.type\t\t%s, @function\n", func->name);
         fprintf(fp, "%s:\n", func->name);
 
-        align_lvar_offsets(func);
+        assign_lvar_offsets(func);
 
         prologue(fp, 0);
 
@@ -128,18 +138,18 @@ void emit_data(FILE *fp, struct ASTNode *prog) {
         while (varlist && varlist->node) {
             struct ASTNodeVar *var = (struct ASTNodeVar *)varlist->node;
 
-            fprintf(fp, "\t.globl %s\n", var->name);
-            fprintf(fp, "\t.type %s, @object\n", var->name);
-            fprintf(fp, "\t.align %d\n", var->ty->align);
+            fprintf(fp, "\t.globl\t\t%s\n", var->name);
+            fprintf(fp, "\t.type\t\t%s, @object\n", var->name);
+            fprintf(fp, "\t.align\t\t%d\n", var->ty->align);
             fprintf(fp, "%s:\n", var->name);
 
             if (var->val == NULL) {
-                fprintf(fp, "\t.zero %d\n", align_to(var->ty->size, var->ty->align));
+                fprintf(fp, "\t.zero\t\t%d\n", align_to(var->ty->size, var->ty->align));
             } else {
                 switch (var->val->kind) {
                     case NodeKind_Number: {
                         struct ASTNodeNum *num = (struct ASTNodeNum *)var->val;
-                        fprintf(fp, "   \t.long %llu\n", num->ival);
+                        fprintf(fp, "   \t.long\t\t%llu\n", num->ival);
                     }
                         break;
                 }
