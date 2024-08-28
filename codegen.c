@@ -1,27 +1,21 @@
 #include "ast.h"
 #include "utils.h"
+#include "frame.h"
 #include "context.h"
 #include "codegen.h"
 
-#define GP_MAX 6
-
-static const char *reg8[] = {"%dil", "%sil", "%dl", "%cl", "%r8b", "%r9b"};
-static const char *reg16[] = {"%di", "%si", "%dx", "%cx", "%r8w", "%r9w"};
-static const char *reg32[] = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
-static const char *reg64[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
-
 void prologue(FILE *fp, int stack_size) {
     fprintf(fp, "\tendbr64\n");
-    fprintf(fp, "\tpushq\t\t%%rbp\n");
-    fprintf(fp, "\tmovq\t\t%%rsp, %%rbp\n");
+    fprintf(fp, "\tpushq\t\t%s\n", sp());
+    fprintf(fp, "\tmovq\t\t%s, %s\n", sp(), bp());
 
     if (stack_size) {
-        fprintf(fp, "\tsubq\t\t$%d, %%rbp\n", align_to(stack_size, 16));
+        fprintf(fp, "\tsubq\t\t$%d, %s\n", align_to(stack_size, 16), bp());
     }
 }
 
 void epilogue(FILE *fp) {
-    fprintf(fp, "\tpopq\t\t%%rbp\n");
+    fprintf(fp, "\tpopq\t\t%s\n", bp());
     fprintf(fp, "\tretq\n");
 }
 
@@ -34,7 +28,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
         case NodeKind_FnCall: {
             struct ASTNode *call = expr->left;
 
-            int cnt = 0;
+            int gp = 0;
             while (call) {
                 struct ASTNodeNum *num = NULL;
                 if (call->kind == NodeKind_Number) {
@@ -47,16 +41,18 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                     }
                 }
 
-                if (cnt < GP_MAX) {
+                if (gp < GP_MAX) {
                     if (num) {
-                        fprintf(fp, "\tmovl\t\t$%d, %s\n", num->ival, reg32[cnt]);
+                        fprintf(fp, "\tmovl\t\t$%d, %s\n", num->ival, generic(gp, 8));
                     } else {
-                        fprintf(fp, "\tmovl\t\t%%eax, %s\n", reg32[cnt]);
+                        fprintf(fp, "\tmovl\t\t%s, %s\n", ax(8), generic(gp, 8));
                     }
+                } else {
+
                 }
 
                 call = call->right;
-                ++cnt;
+                ++gp;
             }
 
             fprintf(fp, "\tcallq\t\t%s\n", ((struct ASTNodeFnCall *)expr)->name);
@@ -64,7 +60,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             break;
         case NodeKind_Number: {
             struct ASTNodeNum *num = (struct ASTNodeNum *)expr;
-            fprintf(fp, "\tmovl\t\t$%d, %%eax\n", num->ival);
+            fprintf(fp, "\tmovl\t\t$%d, %s\n", num->ival, ax(8));
         }
             break;
     }
@@ -139,7 +135,7 @@ void store_gp(FILE *fp, struct ASTNodeList *params) {
                 }
                     break;
                 case 4: {
-                    fprintf(fp, "\tmovl\t\t%s, %d(%%rbp)\n", reg32[gp], var->offset);
+                    fprintf(fp, "\tmovl\t\t%s, %d(%s)\n", generic(gp, var->ty->size), var->offset, bp());
                 }
                     break;
                 case 8: {
