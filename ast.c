@@ -13,10 +13,10 @@ struct ASTNode *newast_node(NodeKind kind, struct ASTNode *left, struct ASTNode 
     return ast;
 }
 
-struct ASTNode *newast_num(uint64_t val) {
+struct ASTNode *newast_num(int val) {
     struct ASTNodeNum *num = (struct ASTNodeNum *)malloc(sizeof(struct ASTNodeNum));
     num->ast.kind = NodeKind_Number;
-    num->ival = val;
+    num->value.ival = val;
     return num;
 }
 
@@ -45,6 +45,7 @@ struct ASTNode *newast_list(struct ASTNode *list, struct ASTNode *node) {
 
     next->node = node;
     next->next = NULL;
+    ++next->index;
 
     if (list == NULL) {
         return next;
@@ -84,7 +85,7 @@ struct ASTNode *newast_fncall(const char *name, struct ASTNode *args) {
 }
 
 struct ASTNode *newast_compoundstmt(const char *fn, struct ASTNode *stmts) {
-    
+
     struct ASTNodeCompoundStmt *stmt = (struct ASTNodeCompoundStmt *)malloc(sizeof(struct ASTNodeCompoundStmt));
     
     stmt->ast.kind = NodeKind_CompoundStmt;

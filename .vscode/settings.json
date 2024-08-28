@@ -4,6 +4,7 @@
     "files.associations": {
         "codegen.h": "c",
         "__node_handle": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "ios": "c"
     }
 }

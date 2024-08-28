@@ -3,11 +3,12 @@
 #include "frame.h"
 #include "context.h"
 #include "codegen.h"
+#include "instruction.h"
 
 void prologue(FILE *fp, int stack_size) {
     fprintf(fp, "\tendbr64\n");
-    fprintf(fp, "\tpushq\t\t%s\n", sp());
-    fprintf(fp, "\tmovq\t\t%s, %s\n", sp(), bp());
+    fprintf(fp, "\t%s\t\t%s\n", push(), sp());
+    fprintf(fp, "\t%s\t\t%s, %s\n", mov(8), sp(), bp());
 
     if (stack_size) {
         fprintf(fp, "\tsubq\t\t$%d, %s\n", align_to(stack_size, 16), bp());
@@ -15,8 +16,8 @@ void prologue(FILE *fp, int stack_size) {
 }
 
 void epilogue(FILE *fp) {
-    fprintf(fp, "\tpopq\t\t%s\n", bp());
-    fprintf(fp, "\tretq\n");
+    fprintf(fp, "\t%s\t\t%s\n", pop(), bp());
+    fprintf(fp, "\t%s\n", ret());
 }
 
 void emit_expr(FILE *fp, struct ASTNode *expr) {
@@ -26,41 +27,44 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
 
     switch (expr->kind) {
         case NodeKind_FnCall: {
-            struct ASTNode *call = expr->left;
+            struct ASTNode *call_exp = expr->left;
 
-            int gp = 0;
-            while (call) {
+            int gp = 0, offset = 0;
+            while (call_exp) {
                 struct ASTNodeNum *num = NULL;
-                if (call->kind == NodeKind_Number) {
-                    num = (struct ASTNodeNum *)call;
-                } else if (call->kind == NodeKind_CommaExpr) {
-                    if (call->left->kind == NodeKind_Number) {
-                        num = (struct ASTNodeNum *)call->left;
+                if (call_exp->kind == NodeKind_Number) {
+                    num = (struct ASTNodeNum *)call_exp;
+                } else if (call_exp->kind == NodeKind_CommaExpr) {
+                    if (call_exp->left->kind == NodeKind_Number) {
+                        num = (struct ASTNodeNum *)call_exp->left;
                     } else {
-                        emit_expr(fp, call->left);
+                        emit_expr(fp, call_exp->left);
                     }
                 }
 
                 if (gp < GP_MAX) {
                     if (num) {
-                        fprintf(fp, "\tmovl\t\t$%d, %s\n", num->ival, generic(gp, 8));
+                        fprintf(fp, "\t%s\t\t$%d, %s\n", mov(sizeof(num->value.ival)), num->value.ival, generic(gp, sizeof(num->value.ival)));
                     } else {
-                        fprintf(fp, "\tmovl\t\t%s, %s\n", ax(8), generic(gp, 8));
+                        fprintf(fp, "\t%s\t\t%s, %s\n", mov(sizeof(num->value.ival)), ax(sizeof(num->value.ival)), generic(gp, sizeof(num->value.ival)));
                     }
                 } else {
-
+                    if (num) {
+                        fprintf(fp, "\t%s\t\t$%d, %d(%s)\n", mov(sizeof(num->value.ival)), num->value.ival, offset, bp());
+                        offset += 8;
+                    }
                 }
 
-                call = call->right;
+                call_exp = call_exp->right;
                 ++gp;
             }
 
-            fprintf(fp, "\tcallq\t\t%s\n", ((struct ASTNodeFnCall *)expr)->name);
+            fprintf(fp, "\t%s\t\t%s\n", call(), ((struct ASTNodeFnCall *)expr)->name);
         }
             break;
         case NodeKind_Number: {
             struct ASTNodeNum *num = (struct ASTNodeNum *)expr;
-            fprintf(fp, "\tmovl\t\t$%d, %s\n", num->ival, ax(8));
+            fprintf(fp, "\t%s\t\t$%d, %s\n", mov(sizeof(num->value.ival)), num->value.ival, ax(sizeof(num->value.ival)));
         }
             break;
     }
@@ -72,7 +76,7 @@ void emit_stmt(FILE *fp, struct ASTNode *stmts) {
         case NodeKind_CompoundStmt: {
             struct ASTNodeList *stmt = ((struct ASTNodeCompoundStmt *)stmts)->ast.left;
             if (!stmt) {
-                fprintf(fp, "\tnop\n");
+                fprintf(fp, "\t%s\n", nop());
                 return ;
             }
             while (stmt) {
@@ -102,7 +106,8 @@ void assign_lvar_offsets(struct ASTNodeFunction *func) {
     while (paramlist && paramlist->node) {
         struct ASTNodeVar *var = (struct ASTNodeVar *)paramlist->node;
         if (gp < GP_MAX) {
-            bottom += align_to(var->ty->size, var->ty->align);
+            bottom += var->ty->size;
+            bottom = align_to(bottom, var->ty->align);
             var->offset = -bottom;
         } else {
             var->offset = top;
@@ -125,28 +130,7 @@ void store_gp(FILE *fp, struct ASTNodeList *params) {
 
         if (p->node->kind == NodeKind_Variable) {
             struct ASTNodeVar *var = (struct ASTNodeVar *)p->node;
-            switch (var->ty->size) {
-                case 1: {
-
-                }
-                    break;
-                case 2: {
-
-                }
-                    break;
-                case 4: {
-                    fprintf(fp, "\tmovl\t\t%s, %d(%s)\n", generic(gp, var->ty->size), var->offset, bp());
-                }
-                    break;
-                case 8: {
-
-                }
-                    break;
-                default: {
-
-                }
-                    break;
-            }
+            fprintf(fp, "\t%s\t\t%s, %d(%s)\n", mov(var->ty->size), generic(gp, var->ty->size), var->offset, bp());
         }
 
         ++gp;
@@ -208,7 +192,7 @@ void emit_data(FILE *fp, struct ASTNode *prog) {
                 switch (var->val->kind) {
                     case NodeKind_Number: {
                         struct ASTNodeNum *num = (struct ASTNodeNum *)var->val;
-                        fprintf(fp, "   \t.long\t\t%llu\n", num->ival);
+                        fprintf(fp, "   \t.long\t\t%llu\n", num->value.ival);
                     }
                         break;
                 }

@@ -1,6 +1,6 @@
 %{
     #include "cmm.tab.h"
-    #include "ast.h"
+    #include "type.h"
 %}
 
 %option noyywrap
@@ -9,6 +9,9 @@
 
 "int"                                                       { yylval.ty = ty_int; return INT; }
 "void"                                                      { yylval.ty = ty_void; return VOID; }
+"char"                                                      { yylval.ty = ty_char; return CHAR; }
+"short"                                                     { yylval.ty = ty_short; return SHORT; }
+"long"                                                      { yylval.ty = ty_long; return LONG; }
 "{"                                                         { return LBRACE; }
 "}"                                                         { return RBRACE; }
 "("                                                         { return LPARAM; }

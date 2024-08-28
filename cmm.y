@@ -22,12 +22,13 @@
     struct ASTNode *node;
 }
 
-%token <ty> INT VOID
+%token <ty> INT VOID CHAR SHORT LONG
 %token <name> IDENT
 %token SEMICOLON COMMA EQUAL
 %token <ivar> NUMBER 
 %token LPARAM RPARAM LBRACE RBRACE LBRACK RBRACK
 
+%type <ty> type_ident
 %type <node> program var_decl variable var_list func_decl
 %type <node> func_param func_param_list
 %type <node> stmt stmt_list
@@ -46,7 +47,13 @@ program: { $$ = NULL; }
     | program var_decl    { $$ = newast_list($1, $2); }
     | program func_decl { $$ = newast_list($1, $2); }
 
-var_decl: INT var_list SEMICOLON {
+type_ident: VOID { $$ = $1; }
+    | CHAR { $$ = $1; }
+    | INT {$$ = $1; }
+    | SHORT { $$ = $1; }
+    | LONG { $$ = $1; }
+
+var_decl: type_ident var_list SEMICOLON {
                 $$ = newast_vardecl($1, $2);
             }
 
@@ -64,15 +71,15 @@ var_list: variable {
         $$ = newast_list($1, $3);
     }
 
-func_decl: VOID IDENT LPARAM VOID RPARAM compound_stmt {
+func_decl: type_ident IDENT LPARAM VOID RPARAM compound_stmt {
         $$ = newast_function($1, $2, NULL, $6);
     }
-    | VOID IDENT LPARAM func_param_list RPARAM compound_stmt {
+    | type_ident IDENT LPARAM func_param_list RPARAM compound_stmt {
         $$ = newast_function($1, $2, $4, $6);
     }
 
 func_param: { $$ = NULL; }
-    | INT IDENT {
+    | type_ident IDENT {
         $$ = newast_var($2, $1, NULL);
     }
 
@@ -96,7 +103,7 @@ stmt: expr SEMICOLON {
         $$ = newast_node(NodeKind_ExprStmt, $1, NULL);
     }
     | var_decl {
-        
+
     }
 
 stmt_list:  { $$ = NULL; }

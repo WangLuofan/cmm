@@ -36,13 +36,17 @@ typedef struct ASTNodeVar {
 typedef struct ASTNodeList {
     struct ASTNode ast;
 
+    int index;
     struct ASTNode *node;
     struct ASTNode *next;
 }ASTNodeList;
 
 typedef struct ASTNodeNum {
     struct ASTNode ast;
-    uint64_t ival;
+    union value {
+        int ival;
+    }value;
+    
 }ASTNodeNum;
 
 typedef struct ASTNodeFunction {
@@ -65,7 +69,7 @@ typedef struct ASTNodeCompoundStmt {
 struct ASTNode *newast_node(NodeKind, struct ASTNode *, struct ASTNode *);
 struct ASTNode *newast_list(struct ASTNode *, struct ASTNode *);
 struct ASTNode *newast_var(char *, struct Type *, struct ASTNode *);
-struct ASTNode *newast_num(uint64_t);
+struct ASTNode *newast_num(int);
 struct ASTNode *newast_compoundstmt(const char *, struct ASTNode *);
 struct ASTNode *newast_vardecl(struct Type *, struct ASTNode *);
 struct ASTNode *newast_function(struct Type *, const char *, struct ASTNode *, struct ASTNode *);
