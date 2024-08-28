@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-struct ASTNode *newast(NodeKind kind, struct ASTNode *left, struct ASTNode *right) {
+struct ASTNode *newast_node(NodeKind kind, struct ASTNode *left, struct ASTNode *right) {
     struct ASTNode *ast = (struct ASTNode *)malloc(sizeof(struct ASTNode));
     
     ast->kind = kind;
@@ -71,4 +71,28 @@ struct ASTNode *newast_function(struct Type *ret_ty, const char *name, struct AS
     func->ast.right = body;
 
     return func;
+}
+
+struct ASTNode *newast_fncall(const char *name, struct ASTNode *args) {
+    struct ASTNodeFnCall *call = (struct ASTNodeFnCall *)malloc(sizeof(struct ASTNodeFnCall));
+
+    call->ast.kind = NodeKind_FnCall;
+    call->name = strdup(name);
+    call->ast.left = args;
+
+    return call;
+}
+
+struct ASTNode *newast_compoundstmt(const char *fn, struct ASTNode *stmts) {
+    
+    struct ASTNodeCompoundStmt *stmt = (struct ASTNodeCompoundStmt *)malloc(sizeof(struct ASTNodeCompoundStmt));
+    
+    stmt->ast.kind = NodeKind_CompoundStmt;
+    stmt->ast.left = stmts;
+
+    if (fn) {
+        stmt->fn = strdup(fn);
+    }
+
+    return stmt;
 }

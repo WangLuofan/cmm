@@ -25,10 +25,73 @@ void epilogue(FILE *fp) {
     fprintf(fp, "\tretq\n");
 }
 
-void emit_stmt(FILE *fp, struct ASTNode *stmts) {
-    if (stmts == NULL) {
-        fprintf(fp, "\tnop\n");
+void emit_expr(FILE *fp, struct ASTNode *expr) {
+    if (!expr) {
         return ;
+    }
+
+    switch (expr->kind) {
+        case NodeKind_FnCall: {
+            struct ASTNode *call = expr->left;
+
+            int cnt = 0;
+            while (call) {
+                struct ASTNodeNum *num = NULL;
+                if (call->kind == NodeKind_Number) {
+                    num = (struct ASTNodeNum *)call;
+                } else if (call->kind == NodeKind_CommaExpr) {
+                    if (call->left->kind == NodeKind_Number) {
+                        num = (struct ASTNodeNum *)call->left;
+                    } else {
+                        emit_expr(fp, call->left);
+                    }
+                }
+
+                if (cnt < GP_MAX) {
+                    if (num) {
+                        fprintf(fp, "\tmovl\t\t$%d, %s\n", num->ival, reg32[cnt]);
+                    } else {
+                        fprintf(fp, "\tmovl\t\t%%eax, %s\n", reg32[cnt]);
+                    }
+                }
+
+                call = call->right;
+                ++cnt;
+            }
+
+            fprintf(fp, "\tcallq\t\t%s\n", ((struct ASTNodeFnCall *)expr)->name);
+        }
+            break;
+        case NodeKind_Number: {
+            struct ASTNodeNum *num = (struct ASTNodeNum *)expr;
+            fprintf(fp, "\tmovl\t\t$%d, %%eax\n", num->ival);
+        }
+            break;
+    }
+}
+
+void emit_stmt(FILE *fp, struct ASTNode *stmts) {
+
+    switch (stmts->kind) {
+        case NodeKind_CompoundStmt: {
+            struct ASTNodeList *stmt = ((struct ASTNodeCompoundStmt *)stmts)->ast.left;
+            if (!stmt) {
+                fprintf(fp, "\tnop\n");
+                return ;
+            }
+            while (stmt) {
+                emit_stmt(fp, stmt->node);
+                stmt = stmt->next;
+            }
+        }
+            break;
+        case NodeKind_ExprStmt: {
+            struct ASTNode *node = ((struct ASTNode *)stmts)->left;
+            if (node) {
+                emit_expr(fp, node);
+            }
+        }
+            break;
     }
 }
 

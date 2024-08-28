@@ -16,4 +16,7 @@ C Minus Minus Compiler
 
 ## 2024/08/24
 1. 实现 **void fn(void) { }**  无返回值、空参数列表、空函数体的定义
-2. 实现 **void fn(int, int, int, int, int, int) {}** 无返回值、少于6个参数、空函数体的定义
+2. 实现 **void fn(int, int, int, int, int, int) {}** 无返回值、空函数体的定义
+
+## 2024/08/26
+1. 实现 **fn(1, 2, 3, 4, 5)** 函数调用

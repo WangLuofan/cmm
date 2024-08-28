@@ -32,6 +32,7 @@
 %type <node> func_param func_param_list
 %type <node> stmt stmt_list
 %type <node> compound_stmt
+%type <node> expr call_expr
 
 %start accept
 
@@ -82,10 +83,39 @@ func_param_list: func_param {
         $$ = newast_list($1, $3);
     }
 
-stmt: 
+expr: { $$ = NULL; }
+    | NUMBER { $$ = newast_num($1); }
+    | call_expr {
+        $$ = $1;
+    } 
+    | expr COMMA expr {
+        $$ = newast_node(NodeKind_CommaExpr, $1, $3);
+    }
 
-stmt_list:
+stmt: expr SEMICOLON {
+        $$ = newast_node(NodeKind_ExprStmt, $1, NULL);
+    }
+    | var_decl {
+        
+    }
 
-compound_stmt: LBRACE stmt_list RBRACE
+stmt_list:  { $$ = NULL; }
+    | stmt  {
+        $$ = newast_list(NULL, $1);
+    }
+    | stmt_list stmt {
+        $$ = newast_list($1, $2);
+    }
+
+compound_stmt: LBRACE stmt_list RBRACE {
+        if ($2 == NULL) {
+            printf("stmt_list is NULL\n");
+        }
+        $$ = newast_compoundstmt(NULL, $2);
+    }
+
+call_expr: IDENT LPARAM expr RPARAM {
+        $$ = newast_fncall($1, $3);
+    }
 
 %%
