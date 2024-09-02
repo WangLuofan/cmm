@@ -109,6 +109,14 @@ void emit_stmt(FILE *fp, struct ASTNode *stmts) {
             }
         }
             break;
+        case NodeKind_Return: {
+            if (stmts->left == NULL) {
+                return ;
+            }
+
+            emit_expr(fp, stmts->left);
+        }
+            break;
     }
 }
 

@@ -1,4 +1,4 @@
-%{
+    %{
     #include "ast.h"
     #include "type.h"
     #include "context.h"
@@ -32,7 +32,7 @@
 %type <node> program var_decl variable var_list func_decl
 %type <node> func_param func_param_list call_arg_list
 %type <node> stmt stmt_list
-%type <node> compound_stmt
+%type <node> compound_stmt return_stmt
 %type <node> expr call_expr
 
 %start accept
@@ -107,6 +107,9 @@ stmt: expr SEMICOLON {
     | var_decl {
         $$ = $1;
     }
+    | return_stmt {
+        $$ = $1;
+    }
 
 stmt_list:  { $$ = NULL; }
     | stmt  {
@@ -118,6 +121,10 @@ stmt_list:  { $$ = NULL; }
 
 compound_stmt: LBRACE stmt_list RBRACE {
         $$ = newast_compoundstmt($2);
+    }
+
+return_stmt: RETURN expr SEMICOLON {
+        $$ = newast_node(NodeKind_Return, $2, NULL);
     }
 
 call_arg_list: { $$ = NULL; }
