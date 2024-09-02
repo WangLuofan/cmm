@@ -12,6 +12,7 @@
 "char"                                                      { yylval.ty = ty_char; return CHAR; }
 "short"                                                     { yylval.ty = ty_short; return SHORT; }
 "long"                                                      { yylval.ty = ty_long; return LONG; }
+"return"                                                    { return RETURN; }
 "{"                                                         { return LBRACE; }
 "}"                                                         { return RBRACE; }
 "("                                                         { return LPARAM; }

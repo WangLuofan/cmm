@@ -22,7 +22,7 @@
     struct ASTNode *node;
 }
 
-%token <ty> INT VOID CHAR SHORT LONG
+%token <ty> INT VOID CHAR SHORT LONG RETURN
 %token <name> IDENT
 %token SEMICOLON COMMA EQUAL
 %token <ivar> NUMBER 
