@@ -1,4 +1,5 @@
 #include "ast.h"
+#include "eval.h"
 #include "utils.h"
 #include "frame.h"
 #include "context.h"
@@ -27,36 +28,35 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
 
     switch (expr->kind) {
         case NodeKind_FnCall: {
-            struct ASTNode *call_exp = expr->left;
+            struct ASTNodeList *args = ((struct ASTNodeList *)(((struct ASTNodeFnCall *)expr)->ast.left))->next;
 
-            int gp = 0, offset = 0;
-            while (call_exp) {
-                struct ASTNodeNum *num = NULL;
-                if (call_exp->kind == NodeKind_Number) {
-                    num = (struct ASTNodeNum *)call_exp;
-                } else if (call_exp->kind == NodeKind_CommaExpr) {
-                    if (call_exp->left->kind == NodeKind_Number) {
-                        num = (struct ASTNodeNum *)call_exp->left;
-                    } else {
-                        emit_expr(fp, call_exp->left);
-                    }
-                }
-
-                if (gp < GP_MAX) {
-                    if (num) {
-                        fprintf(fp, "\t%s\t\t$%d, %s\n", mov(sizeof(num->value.ival)), num->value.ival, generic(gp, sizeof(num->value.ival)));
-                    } else {
-                        fprintf(fp, "\t%s\t\t%s, %s\n", mov(sizeof(num->value.ival)), ax(sizeof(num->value.ival)), generic(gp, sizeof(num->value.ival)));
-                    }
+            int gp = 0;
+            while (args && args->node && gp < GP_MAX) {
+                if (is_const_expr(args->node)) {
+                    int res = eval(args->node);
+                    fprintf(fp, "\t%s\t\t$%d, %s\n", mov(sizeof(res)), res, generic(gp, sizeof(res)));
                 } else {
-                    if (num) {
-                        fprintf(fp, "\t%s\t\t$%d, %d(%s)\n", mov(sizeof(num->value.ival)), num->value.ival, offset, bp());
-                        offset += 8;
-                    }
+                    eval(args->node);
+                    fprintf(fp, "\t%s\t\t%s, %s\n", mov(sizeof(int)), ax(sizeof(int)), generic(gp, sizeof(int)));
                 }
 
-                call_exp = call_exp->right;
                 ++gp;
+                args = args->next;
+            }
+
+            if (args && args->node) {
+                struct ASTNodeList *prev = ((struct ASTNodeList *)(((struct ASTNodeFnCall *)expr)->ast.left))->prev;
+                while (prev && prev->node && prev != args->prev) {
+                    if (is_const_expr(prev->node)) {
+                        int res = eval(prev->node);
+                        fprintf(fp, "\t%s\t\t$%d\n", push(), res);
+                    } else {
+                        eval(prev->node);
+                        fprintf(fp, "\t%s\t\t%s\n", push(), ax(4));
+                    }
+
+                    prev = prev->prev;
+                }
             }
 
             fprintf(fp, "\t%s\t\t%s\n", call(), ((struct ASTNodeFnCall *)expr)->name);
@@ -71,15 +71,14 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
 }
 
 void emit_stmt(FILE *fp, struct ASTNode *stmts) {
-
     switch (stmts->kind) {
         case NodeKind_CompoundStmt: {
-            struct ASTNodeList *stmt = ((struct ASTNodeCompoundStmt *)stmts)->ast.left;
+            struct ASTNodeList *stmt = ((struct ASTNodeList *)(((struct ASTNodeCompoundStmt *)stmts)->ast.left))->next;
             if (!stmt) {
                 fprintf(fp, "\t%s\n", nop());
                 return ;
             }
-            while (stmt) {
+            while (stmt && stmt->node) {
                 emit_stmt(fp, stmt->node);
                 stmt = stmt->next;
             }
@@ -92,17 +91,35 @@ void emit_stmt(FILE *fp, struct ASTNode *stmts) {
             }
         }
             break;
+        case NodeKind_VarDecl: {
+            struct ASTNodeVarDecl *decl = (struct ASTNodeVarDecl *)stmts;
+            struct ASTNodeList *varlist = ((struct ASTNodeList *)decl->var)->next;
+
+            while (varlist && varlist->node) {
+                struct ASTNodeVar *var = (struct ASTNodeVar *)varlist->node;
+
+                if (is_const_expr(var)) {
+                    fprintf(fp, "\t%s\t\t$%d, %d(%s)\n", mov(var->ty->size), eval(var), var->offset, bp());
+                } else {
+                    emit_expr(fp, var->ast.right);
+                    fprintf(fp, "\t%s\t\t%s, %d(%s)\n", mov(var->ty->size), ax(var->ty->size), var->offset, bp());
+                }
+
+                varlist = varlist->next;
+            }
+        }
+            break;
     }
 }
 
 void assign_lvar_offsets(struct ASTNodeFunction *func) {
-    if (func == NULL) {
+    if (func == NULL || func->locals == NULL) {
         return ;
     }
 
-    struct ASTNodeList *paramlist = (struct ASTNodeList *)func->ast.left;
-
     int gp = 0, bottom = 0, top = 16;
+
+    struct ASTNodeList *paramlist = ((struct ASTNodeList *)func->ast.left)->next;
     while (paramlist && paramlist->node) {
         struct ASTNodeVar *var = (struct ASTNodeVar *)paramlist->node;
         if (gp < GP_MAX) {
@@ -117,31 +134,60 @@ void assign_lvar_offsets(struct ASTNodeFunction *func) {
         ++gp;
         paramlist = paramlist->next;
     }
+
+    struct ASTNodeList *locals = ((struct ASTNodeList *)func->locals)->next;
+    while (locals && locals->node) {
+        struct ASTNodeVar *var = (struct ASTNodeVar *)locals->node;
+        if (!var) {
+            locals = locals->next;
+            continue;
+        }
+        bottom += var->ty->size;
+        bottom = align_to(bottom, var->ty->align);
+        var->offset = -bottom;
+
+        locals = locals->next;
+    }
+
+    func->stack_size = align_to(bottom, 16);
 }
 
 void store_gp(FILE *fp, struct ASTNodeList *params) {
-    struct ASTNodeList *p = (struct ASTNodeList *)params;
-
-    int gp = 0;
+    if (params == NULL) {
+        return ;
+    }
+    
+    int nargs = 0;
+    struct ASTNodeList *p = params->next;
     while (p && p->node) {
-        if (gp >= GP_MAX) {
-            break;
-        }
-
-        if (p->node->kind == NodeKind_Variable) {
-            struct ASTNodeVar *var = (struct ASTNodeVar *)p->node;
-            fprintf(fp, "\t%s\t\t%s, %d(%s)\n", mov(var->ty->size), generic(gp, var->ty->size), var->offset, bp());
-        }
-
-        ++gp;
+        ++nargs;
         p = p->next;
+    }
+
+    int gp = nargs - 1;
+    p = params->prev;
+    while (p && p->node) {
+        if (gp < GP_MAX) {
+            if (p->node->kind == NodeKind_Variable) {
+                struct ASTNodeVar *var = (struct ASTNodeVar *)p->node;
+                fprintf(fp, "\t%s\t\t%s, %d(%s)\n", mov(var->ty->size), generic(gp, var->ty->size), var->offset, bp());
+            }
+        } else {
+            if (p->node->kind == NodeKind_Variable) {
+                struct ASTNodeVar *var = (struct ASTNodeVar *)p->node;
+                fprintf(fp, "\t%s\t\t%d(%s), %s\n", mov(var->ty->size), var->offset, bp(), ax(var->ty->size));
+            }
+        }
+
+        --gp;
+        p = p->prev;
     }
 }
 
 void emit_text(FILE *fp, struct ASTNode *prog) {
     fprintf(fp, "\t.text\n");
 
-    struct ASTNodeList *prog_list = (struct ASTNodeList *)prog;
+    struct ASTNodeList *prog_list = ((struct ASTNodeList *)prog)->next;
     while (prog_list && prog_list->node) {
         if (prog_list->node->kind != NodeKind_Function) {
             prog_list = prog_list->next;
@@ -149,13 +195,14 @@ void emit_text(FILE *fp, struct ASTNode *prog) {
         }
 
         struct ASTNodeFunction *func = (struct ASTNodeFunction *)prog_list->node;
+
         fprintf(fp, "\t.globl\t\t%s\n", func->name);
         fprintf(fp, "\t.type\t\t%s, @function\n", func->name);
         fprintf(fp, "%s:\n", func->name);
 
         assign_lvar_offsets(func);
 
-        prologue(fp, 0);
+        prologue(fp, func->stack_size);
 
         store_gp(fp, func->ast.left);
         emit_stmt(fp, func->ast.right);
@@ -170,28 +217,30 @@ void emit_text(FILE *fp, struct ASTNode *prog) {
 
 void emit_data(FILE *fp, struct ASTNode *prog) {
     fprintf(fp, "\t.data\n");
-    struct ASTNodeList *prog_list = (struct ASTNodeList *)prog;
+    struct ASTNodeList *prog_list = ((struct ASTNodeList *)prog)->next;
     while (prog_list && prog_list->node) {
-        if (prog_list->node->kind == NodeKind_Function) {
+        if (prog_list->node->kind != NodeKind_VarDecl) {
             prog_list = prog_list->next;
             continue;
         }
 
-        struct ASTNodeList *varlist = (struct ASTNodeList *)prog_list->node;
+        struct ASTNodeVarDecl *decl = (struct ASTNodeVarDecl *)prog_list->node;
+        struct ASTNodeList *varlist = ((struct ASTNodeList *)decl->var)->next;
         while (varlist && varlist->node) {
             struct ASTNodeVar *var = (struct ASTNodeVar *)varlist->node;
+            struct Type *ty = (var->ty?: decl->ty);
 
             fprintf(fp, "\t.globl\t\t%s\n", var->name);
             fprintf(fp, "\t.type\t\t%s, @object\n", var->name);
-            fprintf(fp, "\t.align\t\t%d\n", var->ty->align);
+            fprintf(fp, "\t.align\t\t%d\n", ty->align);
             fprintf(fp, "%s:\n", var->name);
 
-            if (var->val == NULL) {
-                fprintf(fp, "\t.zero\t\t%d\n", align_to(var->ty->size, var->ty->align));
+            if (var->ast.right == NULL) {
+                fprintf(fp, "\t.zero\t\t%d\n", align_to(ty->size, ty->align));
             } else {
-                switch (var->val->kind) {
+                switch (var->ast.right->kind) {
                     case NodeKind_Number: {
-                        struct ASTNodeNum *num = (struct ASTNodeNum *)var->val;
+                        struct ASTNodeNum *num = (struct ASTNodeNum *)var->ast.right;
                         fprintf(fp, "   \t.long\t\t%llu\n", num->value.ival);
                     }
                         break;

@@ -14,6 +14,7 @@ typedef enum NodeKind {
     NodeKind_CompoundStmt,
     NodeKind_CommaExpr,
     NodeKind_ExprStmt,
+    NodeKind_VarDecl
 }NodeKind;
 
 typedef struct ASTNode {
@@ -27,18 +28,25 @@ typedef struct ASTNodeVar {
     struct ASTNode ast;
 
     char *name;
-    struct ASTNode *val;
     struct Type *ty;
 
     int offset;
 }ASTNodeVar;
 
+typedef struct ASTNodeVarDecl {
+    struct ASTNode ast;
+
+    struct Type *ty;
+    struct ASTNode *var;
+}ASTNodeVarDecl;
+
 typedef struct ASTNodeList {
     struct ASTNode ast;
 
-    int index;
     struct ASTNode *node;
-    struct ASTNode *next;
+
+    struct ASTNodeList *prev;
+    struct ASTNodeList *next;
 }ASTNodeList;
 
 typedef struct ASTNodeNum {
@@ -53,7 +61,9 @@ typedef struct ASTNodeFunction {
     struct ASTNode ast;
 
     char *name;
+    int stack_size;
     struct Type *ret_ty;
+    struct ASTNode *locals;
 }ASTNodeFunction;
 
 typedef struct ASTNodeFnCall {
@@ -63,16 +73,17 @@ typedef struct ASTNodeFnCall {
 
 typedef struct ASTNodeCompoundStmt {
     struct ASTNode ast;
-    char *fn;
+    struct ASTNode *fn;
 }ASTNodeCompoundStmt;
 
 struct ASTNode *newast_node(NodeKind, struct ASTNode *, struct ASTNode *);
-struct ASTNode *newast_list(struct ASTNode *, struct ASTNode *);
+struct ASTNode *newast_list(struct ASTNodeList *, struct ASTNode *);
 struct ASTNode *newast_var(char *, struct Type *, struct ASTNode *);
 struct ASTNode *newast_num(int);
-struct ASTNode *newast_compoundstmt(const char *, struct ASTNode *);
+struct ASTNode *newast_compoundstmt(struct ASTNode *);
 struct ASTNode *newast_vardecl(struct Type *, struct ASTNode *);
 struct ASTNode *newast_function(struct Type *, const char *, struct ASTNode *, struct ASTNode *);
 struct ASTNode *newast_fncall(const char *, struct ASTNode *);
+struct ASTNode *merge_list(struct ASTNodeList *, struct ASTNodeList *);
 
 #endif

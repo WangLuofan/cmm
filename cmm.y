@@ -30,7 +30,7 @@
 
 %type <ty> type_ident
 %type <node> program var_decl variable var_list func_decl
-%type <node> func_param func_param_list
+%type <node> func_param func_param_list call_arg_list
 %type <node> stmt stmt_list
 %type <node> compound_stmt
 %type <node> expr call_expr
@@ -91,19 +91,21 @@ func_param_list: func_param {
     }
 
 expr: { $$ = NULL; }
-    | NUMBER { $$ = newast_num($1); }
+    | NUMBER { 
+        $$ = newast_num($1); 
+    }
     | call_expr {
         $$ = $1;
-    } 
-    | expr COMMA expr {
-        $$ = newast_node(NodeKind_CommaExpr, $1, $3);
+    }
+    | LPARAM expr RPARAM {
+        $$ = $2;
     }
 
 stmt: expr SEMICOLON {
         $$ = newast_node(NodeKind_ExprStmt, $1, NULL);
     }
     | var_decl {
-
+        $$ = $1;
     }
 
 stmt_list:  { $$ = NULL; }
@@ -115,13 +117,18 @@ stmt_list:  { $$ = NULL; }
     }
 
 compound_stmt: LBRACE stmt_list RBRACE {
-        if ($2 == NULL) {
-            printf("stmt_list is NULL\n");
-        }
-        $$ = newast_compoundstmt(NULL, $2);
+        $$ = newast_compoundstmt($2);
     }
 
-call_expr: IDENT LPARAM expr RPARAM {
+call_arg_list: { $$ = NULL; }
+    | expr {
+        $$ = newast_list(NULL, $1);
+    }
+    | call_arg_list COMMA expr {
+        $$ = newast_list($1, $3);
+    }
+
+call_expr: IDENT LPARAM call_arg_list RPARAM {
         $$ = newast_fncall($1, $3);
     }
 

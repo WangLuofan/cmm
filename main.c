@@ -1,5 +1,6 @@
 #include "context.h"
 #include "codegen.h"
+#include "semantic.h"
 #include "cmm.tab.h"
 
 #include <stdio.h>
@@ -50,7 +51,9 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    emit(context);
+    if (!SEM_prog(context->prog)) {
+        emit(context);
+    }
 
     if (context->output) {
         fclose(context->output);

@@ -5,6 +5,7 @@
         "codegen.h": "c",
         "__node_handle": "c",
         "typeinfo": "c",
-        "ios": "c"
+        "ios": "c",
+        "semantic.h": "c"
     }
 }
