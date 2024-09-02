@@ -37,6 +37,6 @@ semantic.o: semantic.h semantic.c
 	gcc -g -c -o $@ semantic.c
 
 clean:
-	rm -rf cmm.lex.c cmm.tab.h cmm.tab.c cmm *.o *.s
+	rm -rf cmm.lex.c cmm.tab.h cmm.tab.c cmm *.o *.s *.output
 
 .PHONY: clean
