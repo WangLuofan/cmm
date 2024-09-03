@@ -45,15 +45,17 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                 args = args->next;
             }
 
+            int depth = 0;
             if (args && args->node) {
                 struct ASTNodeList *prev = ((struct ASTNodeList *)(((struct ASTNodeFnCall *)expr)->ast.left))->prev;
                 while (prev && prev->node && prev != args->prev) {
+                    ++depth;
                     if (is_const_expr(prev->node)) {
                         int res = eval(prev->node);
                         fprintf(fp, "\t%s\t\t$%d\n", push(), res);
                     } else {
                         eval(prev->node);
-                        fprintf(fp, "\t%s\t\t%s\n", push(), ax(4));
+                        fprintf(fp, "\t%s\t\t%s\n", push(), ax(8));
                     }
 
                     prev = prev->prev;
@@ -61,6 +63,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             }
 
             fprintf(fp, "\t%s\t\t%s\n", call(), ((struct ASTNodeFnCall *)expr)->name);
+            fprintf(fp, "\t%s\t\t$%d, %s\n", add(8), depth << 3, sp());
         }
             break;
         case NodeKind_Number: {
