@@ -8,15 +8,16 @@
 
 void prologue(FILE *fp, int stack_size) {
     fprintf(fp, "\tendbr64\n");
-    fprintf(fp, "\t%s\t\t%s\n", push(), sp());
+    fprintf(fp, "\t%s\t\t%s\n", push(), bp());
     fprintf(fp, "\t%s\t\t%s, %s\n", mov(8), sp(), bp());
 
     if (stack_size) {
-        fprintf(fp, "\tsubq\t\t$%d, %s\n", align_to(stack_size, 16), bp());
+        fprintf(fp, "\t%s\t\t$%d, %s\n", sub(8), align_to(stack_size, 16), sp());
     }
 }
 
 void epilogue(FILE *fp) {
+    fprintf(fp, "\t%s\t\t%s, %s\n", mov(8), bp(), sp());
     fprintf(fp, "\t%s\t\t%s\n", pop(), bp());
     fprintf(fp, "\t%s\n", ret());
 }
@@ -73,7 +74,13 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
 void emit_stmt(FILE *fp, struct ASTNode *stmts) {
     switch (stmts->kind) {
         case NodeKind_CompoundStmt: {
-            struct ASTNodeList *stmt = ((struct ASTNodeList *)(((struct ASTNodeCompoundStmt *)stmts)->ast.left))->next;
+            struct ASTNodeCompoundStmt *compoundStmt = (struct ASTNodeCompoundStmt *)stmts;
+            if (compoundStmt->ast.left == NULL) {
+                fprintf(fp, "\t%s\n", nop());
+                return ;
+            }
+
+            struct ASTNodeList *stmt = ((struct ASTNodeList *)(compoundStmt->ast.left))->next;
             if (!stmt) {
                 fprintf(fp, "\t%s\n", nop());
                 return ;
@@ -121,40 +128,44 @@ void emit_stmt(FILE *fp, struct ASTNode *stmts) {
 }
 
 void assign_lvar_offsets(struct ASTNodeFunction *func) {
-    if (func == NULL || func->locals == NULL) {
+    if (func == NULL) {
         return ;
     }
 
     int gp = 0, bottom = 0, top = 16;
 
-    struct ASTNodeList *paramlist = ((struct ASTNodeList *)func->ast.left)->next;
-    while (paramlist && paramlist->node) {
-        struct ASTNodeVar *var = (struct ASTNodeVar *)paramlist->node;
-        if (gp < GP_MAX) {
+    if (func->ast.left) {
+        struct ASTNodeList *paramlist = ((struct ASTNodeList *)func->ast.left)->next;
+        while (paramlist && paramlist->node) {
+            struct ASTNodeVar *var = (struct ASTNodeVar *)paramlist->node;
+            if (gp < GP_MAX) {
+                bottom += var->ty->size;
+                bottom = align_to(bottom, var->ty->align);
+                var->offset = -bottom;
+            } else {
+                var->offset = top;
+                top += align_to(var->ty->size, 8);
+            }
+
+            ++gp;
+            paramlist = paramlist->next;
+        }
+    }
+
+    if (func->locals != NULL) {
+        struct ASTNodeList *locals = ((struct ASTNodeList *)func->locals)->next;
+        while (locals && locals->node) {
+            struct ASTNodeVar *var = (struct ASTNodeVar *)locals->node;
+            if (!var) {
+                locals = locals->next;
+                continue;
+            }
             bottom += var->ty->size;
             bottom = align_to(bottom, var->ty->align);
             var->offset = -bottom;
-        } else {
-            var->offset = top;
-            top += align_to(var->ty->size, 8);
-        }
 
-        ++gp;
-        paramlist = paramlist->next;
-    }
-
-    struct ASTNodeList *locals = ((struct ASTNodeList *)func->locals)->next;
-    while (locals && locals->node) {
-        struct ASTNodeVar *var = (struct ASTNodeVar *)locals->node;
-        if (!var) {
             locals = locals->next;
-            continue;
         }
-        bottom += var->ty->size;
-        bottom = align_to(bottom, var->ty->align);
-        var->offset = -bottom;
-
-        locals = locals->next;
     }
 
     func->stack_size = align_to(bottom, 16);

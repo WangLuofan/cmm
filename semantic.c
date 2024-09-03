@@ -6,10 +6,13 @@
 struct ASTNodeFunction *current_func = NULL;
 struct ASTNode *locals = NULL;
 
-int SEM_stmt(struct ASTNode *stmt) {
+void SEM_stmt(struct ASTNode *stmt) {
     switch (stmt->kind) {
         case NodeKind_CompoundStmt: {
             struct ASTNodeCompoundStmt *compStmt = (struct ASTNodeCompoundStmt *)stmt;
+            if (compStmt->ast.left == NULL) {
+                return ;
+            }
             struct ASTNodeList *stmts = ((struct ASTNodeList *)compStmt->ast.left)->next;
 
             while (stmts && stmts->node) {
