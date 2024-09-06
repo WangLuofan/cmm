@@ -17,4 +17,8 @@ const char *bp(void);
 
 const char *generic(int, int);
 
+const char *allocate_register(int);
+const char *allocated_register(int);
+void unallocate_register(void);
+
 #endif

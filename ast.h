@@ -5,6 +5,7 @@
 
 #include "type.h"
 
+typedef struct Symbol;
 typedef enum NodeKind {
     NodeKind_NullExpr,
     NodeKind_Variable,
@@ -15,7 +16,8 @@ typedef enum NodeKind {
     NodeKind_CommaExpr,
     NodeKind_ExprStmt,
     NodeKind_VarDecl,
-    NodeKind_Return
+    NodeKind_Return,
+    NodeKind_Add
 }NodeKind;
 
 typedef struct ASTNode {
@@ -29,9 +31,8 @@ typedef struct ASTNodeVar {
     struct ASTNode ast;
 
     char *name;
-    struct Type *ty;
+    struct Symbol *sym;
 
-    int offset;
 }ASTNodeVar;
 
 typedef struct ASTNodeVarDecl {
@@ -62,9 +63,7 @@ typedef struct ASTNodeFunction {
     struct ASTNode ast;
 
     char *name;
-    int stack_size;
-    struct Type *ret_ty;
-    struct ASTNode *locals;
+    struct Symbol *sym;
 }ASTNodeFunction;
 
 typedef struct ASTNodeFnCall {

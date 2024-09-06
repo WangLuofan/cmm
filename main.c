@@ -1,3 +1,4 @@
+#include "scope.h"
 #include "context.h"
 #include "codegen.h"
 #include "semantic.h"
@@ -51,9 +52,11 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    push_scope();
     if (!SEM_prog(context->prog)) {
         emit(context);
     }
+    pop_scope();
 
     if (context->output) {
         fclose(context->output);

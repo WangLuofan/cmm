@@ -22,6 +22,8 @@
     struct ASTNode *node;
 }
 
+%left ADD
+
 %token <ty> INT VOID CHAR SHORT LONG RETURN
 %token <name> IDENT
 %token SEMICOLON COMMA EQUAL
@@ -94,8 +96,14 @@ expr: { $$ = NULL; }
     | NUMBER { 
         $$ = newast_num($1); 
     }
+    | IDENT {
+        $$ = newast_var($1, NULL, NULL);
+    }
     | call_expr {
         $$ = $1;
+    }
+    | expr ADD expr {
+        $$ = newast_node(NodeKind_Add, $1, $3);
     }
     | LPARAM expr RPARAM {
         $$ = $2;

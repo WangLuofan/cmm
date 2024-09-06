@@ -1,4 +1,5 @@
 #include "ast.h"
+#include "symbol.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -26,7 +27,9 @@ struct ASTNode *newast_var(char *name, struct Type *ty, struct ASTNode *expr) {
     var->ast.kind = NodeKind_Variable;
     var->ast.right = expr;
     var->name = strdup(name);
-    var->ty = copy_type(ty);
+
+    var->sym = new_sym(name);    
+    var->sym->ty = copy_type(ty);
 
     return var;
 }
@@ -41,7 +44,7 @@ struct ASTNode *newast_vardecl(struct Type *ty, struct ASTNode *ast) {
     struct ASTNodeList *list = ((struct ASTNodeList *)ast)->next;
     while (list && list->node) {
         struct ASTNodeVar *var = (struct ASTNodeVar *)list->node;
-        var->ty = ty;
+        var->sym->ty = copy_type(ty);
 
         list = list->next;
     }
@@ -72,10 +75,12 @@ struct ASTNode *newast_function(struct Type *ret_ty, const char *name, struct AS
     struct ASTNodeFunction *func = (struct ASTNodeFunction *)malloc(sizeof(struct ASTNodeFunction));
 
     func->ast.kind = NodeKind_Function;
-    func->ret_ty = copy_type(ret_ty);
     func->name = strdup(name);
     func->ast.left = params;
     func->ast.right = body;
+    
+    func->sym = new_sym(name);
+    func->sym->ty = copy_type(ret_ty);
 
     return func;
 }

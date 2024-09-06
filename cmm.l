@@ -22,6 +22,7 @@
 ";"                                                         { return SEMICOLON; }
 ","                                                         { return COMMA; }
 "="                                                         { return EQUAL; }
+"+"                                                         { return ADD; }
 
 0|[1-9]+[0-9]*                                              { yylval.ivar = atoi(yytext); return NUMBER; }
 [_a-zA-Z]+[_0-9a-zA-Z]*                                     { strcpy(yylval.name, yytext); return IDENT; }

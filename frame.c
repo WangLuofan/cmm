@@ -121,6 +121,36 @@ const char *r9(int sz) {
     return NULL;
 }
 
+const char *r10(int sz) {
+    switch (sz) {
+        case 1:
+            return "%r10b";
+        case 2:
+            return "%r10w";
+        case 4:
+            return "%r10d";
+        case 8:
+            return "%r10";
+    }
+
+    return NULL;
+}
+
+const char *r11(int sz) {
+    switch (sz) {
+        case 1:
+            return "%r11b";
+        case 2:
+            return "%r11w";
+        case 4:
+            return "%r11d";
+        case 8:
+            return "%r11";
+    }
+
+    return NULL;
+}
+
 const char *sp(void) {
     return "%rsp";   
 }
@@ -132,4 +162,29 @@ const char *bp(void) {
 const char *generic(int gp, int sz) {
     const char *reg[] = { di(sz), si(sz), dx(sz), cx(sz), r8(sz), r9(sz) };
     return reg[gp];
+}
+
+const char *reg(int index, int sz) {
+    const char *reg[] = { ax(sz), cx(sz), dx(sz), di(sz), si(sz), r8(sz), r9(sz), r10(sz), r11(sz) };
+    return reg[index];
+}
+
+static int reg_index = 0;
+static int reg_stack[9] = { 0 };
+
+const char *allocate_register(int sz) {
+    reg_stack[reg_index] = reg_index + 1;
+    return reg(reg_index++, sz);
+}
+
+const char *allocated_register(int sz) {
+    if (reg_index <= 0) {
+        return NULL;
+    }
+
+    return reg(reg_stack[reg_index - 1] - 1, sz);
+}
+
+void unallocate_register(void) {
+    reg_stack[--reg_index] = 0;
 }

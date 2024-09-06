@@ -2,6 +2,7 @@
 #include "eval.h"
 #include "utils.h"
 #include "frame.h"
+#include "symbol.h"
 #include "context.h"
 #include "codegen.h"
 #include "instruction.h"
@@ -62,13 +63,55 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                 }
             }
 
+            depth = align_to(depth << 3, 16) ?: 16;
+
             fprintf(fp, "\t%s\t\t%s\n", call(), ((struct ASTNodeFnCall *)expr)->name);
-            fprintf(fp, "\t%s\t\t$%d, %s\n", add(8), depth << 3, sp());
+            fprintf(fp, "\t%s\t\t$%d, %s\n", add(8), depth, sp());
         }
             break;
         case NodeKind_Number: {
             struct ASTNodeNum *num = (struct ASTNodeNum *)expr;
             fprintf(fp, "\t%s\t\t$%d, %s\n", mov(sizeof(num->value.ival)), num->value.ival, ax(sizeof(num->value.ival)));
+        }
+            break;
+        case NodeKind_Add: {
+            switch (expr->left->kind) {
+                case NodeKind_Variable: {
+                    struct ASTNodeVar *var = (struct ASTNodeVar *)expr->left;
+                    fprintf(fp, "\t%s\t\t%d(%s), %s\n", mov(var->sym->ty->size), var->sym->offset, bp(), allocate_register(var->sym->ty->size));
+                }
+                    break;
+                case NodeKind_Number: {
+                    struct ASTNodeNum *num = (struct ASTNodeNum *)expr->left;
+                    fprintf(fp, "\t%s\t\t$%d, %s\n", mov(sizeof(num->value)), num->value, allocate_register(sizeof(num->value)));
+                }
+                    break;
+                default: {
+                    emit_expr(fp, expr->left);
+                }
+                    break;
+            }
+
+            switch (expr->right->kind) {
+                case NodeKind_Variable: {
+                    struct ASTNodeVar *var = (struct ASTNodeVar *)expr->right;
+                    fprintf(fp, "\t%s\t\t%d(%s), %s\n", add(var->sym->ty->size), var->sym->offset, bp(), allocated_register(var->sym->ty->size));
+                }
+                    break;
+                case NodeKind_Number: {
+                    struct ASTNodeNum *num = (struct ASTNodeNum *)expr->right;
+                    fprintf(fp, "\t%s\t\t$%d, %s\n", add(sizeof(num->value)), num->value, allocated_register(sizeof(num->value)));
+                }
+                    break;
+                default: {
+                    emit_expr(fp, expr->right);
+                    
+                    const char *reg = allocated_register(4);
+                    unallocate_register();
+                    fprintf(fp, "\t%s\t\t%s, %s\n", add(4), reg, allocated_register(4));
+                }
+                    break;
+            }
         }
             break;
     }
@@ -109,10 +152,10 @@ void emit_stmt(FILE *fp, struct ASTNode *stmts) {
                 struct ASTNodeVar *var = (struct ASTNodeVar *)varlist->node;
 
                 if (is_const_expr(var)) {
-                    fprintf(fp, "\t%s\t\t$%d, %d(%s)\n", mov(var->ty->size), eval(var), var->offset, bp());
+                    fprintf(fp, "\t%s\t\t$%d, %d(%s)\n", mov(var->sym->ty->size), eval(var), var->sym->offset, bp());
                 } else {
                     emit_expr(fp, var->ast.right);
-                    fprintf(fp, "\t%s\t\t%s, %d(%s)\n", mov(var->ty->size), ax(var->ty->size), var->offset, bp());
+                    fprintf(fp, "\t%s\t\t%s, %d(%s)\n", mov(var->sym->ty->size), ax(var->sym->ty->size), var->sym->offset, bp());
                 }
 
                 varlist = varlist->next;
@@ -142,12 +185,12 @@ void assign_lvar_offsets(struct ASTNodeFunction *func) {
         while (paramlist && paramlist->node) {
             struct ASTNodeVar *var = (struct ASTNodeVar *)paramlist->node;
             if (gp < GP_MAX) {
-                bottom += var->ty->size;
-                bottom = align_to(bottom, var->ty->align);
-                var->offset = -bottom;
+                bottom += var->sym->ty->size;
+                bottom = align_to(bottom, var->sym->ty->align);
+                var->sym->offset = -bottom;
             } else {
-                var->offset = top;
-                top += align_to(var->ty->size, 8);
+                var->sym->offset = top;
+                top += align_to(var->sym->ty->size, 8);
             }
 
             ++gp;
@@ -155,23 +198,23 @@ void assign_lvar_offsets(struct ASTNodeFunction *func) {
         }
     }
 
-    if (func->locals != NULL) {
-        struct ASTNodeList *locals = ((struct ASTNodeList *)func->locals)->next;
+    if (func->sym->locals != NULL) {
+        struct ASTNodeList *locals = ((struct ASTNodeList *)func->sym->locals)->next;
         while (locals && locals->node) {
             struct ASTNodeVar *var = (struct ASTNodeVar *)locals->node;
             if (!var) {
                 locals = locals->next;
                 continue;
             }
-            bottom += var->ty->size;
-            bottom = align_to(bottom, var->ty->align);
-            var->offset = -bottom;
+            bottom += var->sym->ty->size;
+            bottom = align_to(bottom, var->sym->ty->align);
+            var->sym->offset = -bottom;
 
             locals = locals->next;
         }
     }
 
-    func->stack_size = align_to(bottom, 16);
+    func->sym->stack_size = align_to(bottom, 16) ?: 16;
 }
 
 void store_gp(FILE *fp, struct ASTNodeList *params) {
@@ -192,12 +235,12 @@ void store_gp(FILE *fp, struct ASTNodeList *params) {
         if (gp < GP_MAX) {
             if (p->node->kind == NodeKind_Variable) {
                 struct ASTNodeVar *var = (struct ASTNodeVar *)p->node;
-                fprintf(fp, "\t%s\t\t%s, %d(%s)\n", mov(var->ty->size), generic(gp, var->ty->size), var->offset, bp());
+                fprintf(fp, "\t%s\t\t%s, %d(%s)\n", mov(var->sym->ty->size), generic(gp, var->sym->ty->size), var->sym->offset, bp());
             }
         } else {
             if (p->node->kind == NodeKind_Variable) {
                 struct ASTNodeVar *var = (struct ASTNodeVar *)p->node;
-                fprintf(fp, "\t%s\t\t%d(%s), %s\n", mov(var->ty->size), var->offset, bp(), ax(var->ty->size));
+                fprintf(fp, "\t%s\t\t%d(%s), %s\n", mov(var->sym->ty->size), var->sym->offset, bp(), ax(var->sym->ty->size));
             }
         }
 
@@ -224,7 +267,7 @@ void emit_text(FILE *fp, struct ASTNode *prog) {
 
         assign_lvar_offsets(func);
 
-        prologue(fp, func->stack_size);
+        prologue(fp, func->sym->stack_size);
 
         store_gp(fp, func->ast.left);
         emit_stmt(fp, func->ast.right);
@@ -250,7 +293,7 @@ void emit_data(FILE *fp, struct ASTNode *prog) {
         struct ASTNodeList *varlist = ((struct ASTNodeList *)decl->var)->next;
         while (varlist && varlist->node) {
             struct ASTNodeVar *var = (struct ASTNodeVar *)varlist->node;
-            struct Type *ty = (var->ty?: decl->ty);
+            struct Type *ty = (var->sym->ty?: decl->ty);
 
             fprintf(fp, "\t.globl\t\t%s\n", var->name);
             fprintf(fp, "\t.type\t\t%s, @object\n", var->name);

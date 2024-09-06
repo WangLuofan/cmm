@@ -1,4 +1,4 @@
-OBJS=ast.o type.o codegen.o utils.o hashmap.o frame.o instruction.o semantic.o eval.o
+OBJS=ast.o type.o codegen.o utils.o hashmap.o frame.o instruction.o semantic.o eval.o symbol.o scope.o
 
 cmm: main.c cmm.tab.c cmm.lex.c $(OBJS)
 	gcc -g -o $@ main.c cmm.tab.c cmm.lex.c -lfl $(OBJS)
@@ -35,6 +35,12 @@ instruction.o: instruction.h instruction.c
 
 semantic.o: semantic.h semantic.c
 	gcc -g -c -o $@ semantic.c
+
+symbol.o: symbol.h symbol.c
+	gcc -g -c -o $@ symbol.c
+
+scope.o: scope.h scope.c
+	gcc -g -c -o $@ scope.c
 
 clean:
 	rm -rf cmm.lex.c cmm.tab.h cmm.tab.c cmm *.o *.s *.output a.out
