@@ -8,7 +8,7 @@ struct Scope *scope = NULL;
 
 void push_scope(void) {
     struct Scope *sc = (struct Scope *)malloc(sizeof(struct Scope));
-    sc->symtab = (struct HashMap *)malloc(sizeof(struct HashMap));
+    sc->symtab = new_hash_map();
 
     if (scope) {
         sc->next = scope;

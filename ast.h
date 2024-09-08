@@ -17,7 +17,8 @@ typedef enum NodeKind {
     NodeKind_ExprStmt,
     NodeKind_VarDecl,
     NodeKind_Return,
-    NodeKind_Add
+    NodeKind_Add,
+    NodeKind_Sub
 }NodeKind;
 
 typedef struct ASTNode {

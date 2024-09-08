@@ -188,3 +188,11 @@ const char *allocated_register(int sz) {
 void unallocate_register(void) {
     reg_stack[--reg_index] = 0;
 }
+
+void unallocate_all(void) {
+    while (reg_index) {
+        reg_stack[reg_index--] = 0;
+    }
+    
+    reg_stack[reg_index] = 0;
+}

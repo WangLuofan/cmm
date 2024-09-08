@@ -74,7 +74,9 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             fprintf(fp, "\t%s\t\t$%d, %s\n", mov(sizeof(num->value.ival)), num->value.ival, ax(sizeof(num->value.ival)));
         }
             break;
+        case NodeKind_Sub:
         case NodeKind_Add: {
+            const char *(*inst)(int) = (expr->kind == NodeKind_Add ? add : sub);
             switch (expr->left->kind) {
                 case NodeKind_Variable: {
                     struct ASTNodeVar *var = (struct ASTNodeVar *)expr->left;
@@ -95,12 +97,12 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             switch (expr->right->kind) {
                 case NodeKind_Variable: {
                     struct ASTNodeVar *var = (struct ASTNodeVar *)expr->right;
-                    fprintf(fp, "\t%s\t\t%d(%s), %s\n", add(var->sym->ty->size), var->sym->offset, bp(), allocated_register(var->sym->ty->size));
+                    fprintf(fp, "\t%s\t\t%d(%s), %s\n", inst(var->sym->ty->size), var->sym->offset, bp(), allocated_register(var->sym->ty->size));
                 }
                     break;
                 case NodeKind_Number: {
                     struct ASTNodeNum *num = (struct ASTNodeNum *)expr->right;
-                    fprintf(fp, "\t%s\t\t$%d, %s\n", add(sizeof(num->value)), num->value, allocated_register(sizeof(num->value)));
+                    fprintf(fp, "\t%s\t\t$%d, %s\n", inst(sizeof(num->value)), num->value, allocated_register(sizeof(num->value)));
                 }
                     break;
                 default: {
@@ -168,6 +170,7 @@ void emit_stmt(FILE *fp, struct ASTNode *stmts) {
             }
 
             emit_expr(fp, stmts->left);
+            unallocate_all();
         }
             break;
     }
@@ -262,7 +265,9 @@ void emit_text(FILE *fp, struct ASTNode *prog) {
         struct ASTNodeFunction *func = (struct ASTNodeFunction *)prog_list->node;
 
         fprintf(fp, "\t.globl\t\t%s\n", func->name);
-        fprintf(fp, "\t.type\t\t%s, @function\n", func->name);
+        #ifdef __linux__
+            fprintf(fp, "\t.type\t\t%s, @function\n", func->name);
+        #endif
         fprintf(fp, "%s:\n", func->name);
 
         assign_lvar_offsets(func);

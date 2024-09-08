@@ -19,6 +19,8 @@ const char *generic(int, int);
 
 const char *allocate_register(int);
 const char *allocated_register(int);
+
 void unallocate_register(void);
+void unallocate_all(void);
 
 #endif

@@ -13,6 +13,7 @@ typedef struct HashMap {
     int used;
 }HashMap;
 
+struct HashMap *new_hash_map(void);
 void *hash_map_get(struct HashMap *, const char *);
 void hash_map_put(struct HashMap *, const char *, void *);
 void hash_map_delete(struct HashMap *, const char *);

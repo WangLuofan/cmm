@@ -14,6 +14,13 @@
 
 #define TOMBSTONE ((void *)-1)
 
+struct HashMap *new_hash_map(void) {
+    struct HashMap *map = (struct HashMap *)malloc(sizeof(struct HashMap));
+    map->buckets = NULL;
+    map->capacity = 0;
+    map->used = 0;
+}
+
 uint64_t fnv_hash(const char *str, int length) {
     uint64_t hash = 0xcbf29ce484222325;
     for (int i = 0; i != length; ++i) {
