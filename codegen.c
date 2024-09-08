@@ -23,6 +23,19 @@ void epilogue(FILE *fp) {
     fprintf(fp, "\t%s\n", ret());
 }
 
+const char *(*inst(int arith))(int) {
+    switch (arith) {
+        case ArithKind_Add:
+            return add;
+        case ArithKind_Sub:
+            return sub;
+        case ArithKind_Mul:
+            return mul;
+    }
+
+    return NULL;
+}
+
 void emit_expr(FILE *fp, struct ASTNode *expr) {
     if (!expr) {
         return ;
@@ -74,9 +87,10 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             fprintf(fp, "\t%s\t\t$%d, %s\n", mov(sizeof(num->value.ival)), num->value.ival, ax(sizeof(num->value.ival)));
         }
             break;
-        case NodeKind_Sub:
-        case NodeKind_Add: {
-            const char *(*inst)(int) = (expr->kind == NodeKind_Add ? add : sub);
+        case NodeKind_Arith: {
+            struct ASTNodeArith *arith = (struct ASTNodeArith *)expr;
+
+            const char *(*fn)(int) = inst(arith->kind);
             switch (expr->left->kind) {
                 case NodeKind_Variable: {
                     struct ASTNodeVar *var = (struct ASTNodeVar *)expr->left;
@@ -97,12 +111,12 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             switch (expr->right->kind) {
                 case NodeKind_Variable: {
                     struct ASTNodeVar *var = (struct ASTNodeVar *)expr->right;
-                    fprintf(fp, "\t%s\t\t%d(%s), %s\n", inst(var->sym->ty->size), var->sym->offset, bp(), allocated_register(var->sym->ty->size));
+                    fprintf(fp, "\t%s\t\t%d(%s), %s\n", fn(var->sym->ty->size), var->sym->offset, bp(), allocated_register(var->sym->ty->size));
                 }
                     break;
                 case NodeKind_Number: {
                     struct ASTNodeNum *num = (struct ASTNodeNum *)expr->right;
-                    fprintf(fp, "\t%s\t\t$%d, %s\n", inst(sizeof(num->value)), num->value, allocated_register(sizeof(num->value)));
+                    fprintf(fp, "\t%s\t\t$%d, %s\n", fn(sizeof(num->value)), num->value, allocated_register(sizeof(num->value)));
                 }
                     break;
                 default: {

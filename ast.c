@@ -105,6 +105,17 @@ struct ASTNode *newast_compoundstmt(struct ASTNode *stmts) {
     return stmt;
 }
 
+struct ASTNode *newast_arith(ArithKind kind, struct ASTNode *left, struct ASTNode *right) {
+    struct ASTNodeArith *arith = (struct ASTNodeArith *)malloc(sizeof(struct ASTNodeArith));
+
+    arith->kind = kind;
+    arith->ast.kind = NodeKind_Arith;
+    arith->ast.left = left;
+    arith->ast.right = right;
+
+    return arith;
+}
+
 struct ASTNode *merge_list(struct ASTNodeList *list1, struct ASTNodeList *list2) {
 
     if (list2 == NULL) {

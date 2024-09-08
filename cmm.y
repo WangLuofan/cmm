@@ -23,6 +23,7 @@
 }
 
 %left ADD SUB
+%left MUL
 
 %token <ty> INT VOID CHAR SHORT LONG RETURN
 %token <name> IDENT
@@ -103,10 +104,13 @@ expr: { $$ = NULL; }
         $$ = $1;
     }
     | expr ADD expr {
-        $$ = newast_node(NodeKind_Add, $1, $3);
+        $$ = newast_arith(ArithKind_Add, $1, $3);
     }
     | expr SUB expr {
-        $$ = newast_node(NodeKind_Sub, $1, $3);
+        $$ = newast_arith(ArithKind_Sub, $1, $3);
+    }
+    | expr MUL expr {
+        $$ = newast_arith(ArithKind_Mul, $1, $3);
     }
     | LPARAM expr RPARAM {
         $$ = $2;

@@ -17,9 +17,15 @@ typedef enum NodeKind {
     NodeKind_ExprStmt,
     NodeKind_VarDecl,
     NodeKind_Return,
-    NodeKind_Add,
-    NodeKind_Sub
+    NodeKind_Arith,
 }NodeKind;
+
+typedef enum ArithKind {
+    ArithKind_Add,
+    ArithKind_Sub,
+    ArithKind_Mul,
+    ArithKind_Div,
+}ArithKind;
 
 typedef struct ASTNode {
     NodeKind kind;
@@ -77,7 +83,14 @@ typedef struct ASTNodeCompoundStmt {
     struct ASTNode *fn;
 }ASTNodeCompoundStmt;
 
+typedef struct ASTNodeArith {
+    struct ASTNode ast;
+
+    ArithKind kind;
+}ASTNodeArith;
+
 struct ASTNode *newast_node(NodeKind, struct ASTNode *, struct ASTNode *);
+struct ASTNode *newast_arith(ArithKind, struct ASTNode *, struct ASTNode *);
 struct ASTNode *newast_list(struct ASTNodeList *, struct ASTNode *);
 struct ASTNode *newast_var(char *, struct Type *, struct ASTNode *);
 struct ASTNode *newast_num(int);

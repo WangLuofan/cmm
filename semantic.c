@@ -19,8 +19,7 @@ void SEM_expr(struct ASTNode *expr) {
             }
         }
             break;
-        case NodeKind_Sub:
-        case NodeKind_Add: {
+        case NodeKind_Arith: {
             SEM_expr(expr->left);
             SEM_expr(expr->right);
         }
