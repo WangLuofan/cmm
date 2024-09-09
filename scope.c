@@ -8,7 +8,7 @@ struct Scope *scope = NULL;
 
 void push_scope(void) {
     struct Scope *sc = (struct Scope *)malloc(sizeof(struct Scope));
-    sc->symtab = new_hash_map();
+    sc->symtab = (struct HashMap *)malloc(sizeof(struct HashMap));
 
     if (scope) {
         sc->next = scope;
@@ -28,7 +28,7 @@ void* find_scope(const char *symbol) {
     struct Scope *sc = scope;
 
     while (sc) {
-        void *entry = hash_map_get(sc->symtab, symbol);
+        void *entry = hashmap_get(sc->symtab, symbol);
         if (entry) {
             return entry;
         }
@@ -39,5 +39,5 @@ void* find_scope(const char *symbol) {
 }
 
 void put_scope(const char *symbol, void *entry) {
-    hash_map_put(scope->symtab, symbol, entry);
+    hashmap_put(scope->symtab, symbol, entry);
 }

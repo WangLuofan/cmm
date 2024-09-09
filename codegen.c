@@ -278,11 +278,20 @@ void emit_text(FILE *fp, struct ASTNode *prog) {
 
         struct ASTNodeFunction *func = (struct ASTNodeFunction *)prog_list->node;
 
-        fprintf(fp, "\t.globl\t\t%s\n", func->name);
+        #ifdef __APPLE__
+            fprintf(fp, "\t.globl\t\t_%s\n", func->name);
+        #else
+            fprintf(fp, "\t.globl\t\t%s\n", func->name);
+        #endif
         #ifdef __linux__
             fprintf(fp, "\t.type\t\t%s, @function\n", func->name);
         #endif
-        fprintf(fp, "%s:\n", func->name);
+
+        #ifdef __APPLE__
+            fprintf(fp, "_%s:\n", func->name);
+        #else
+            fprintf(fp, "%s:\n", func->name);
+        #endif
 
         assign_lvar_offsets(func);
 
@@ -315,7 +324,9 @@ void emit_data(FILE *fp, struct ASTNode *prog) {
             struct Type *ty = (var->sym->ty?: decl->ty);
 
             fprintf(fp, "\t.globl\t\t%s\n", var->name);
-            fprintf(fp, "\t.type\t\t%s, @object\n", var->name);
+            #ifdef __linux__
+                fprintf(fp, "\t.type\t\t%s, @object\n", var->name);
+            #endif
             fprintf(fp, "\t.align\t\t%d\n", ty->align);
             fprintf(fp, "%s:\n", var->name);
 

@@ -3,8 +3,8 @@
 
 typedef struct HashEntry {
     char *key;
-    int keyLen;
-    void *value;
+    int keylen;
+    void *val;
 }HashEntry;
 
 typedef struct HashMap {
@@ -13,9 +13,8 @@ typedef struct HashMap {
     int used;
 }HashMap;
 
-struct HashMap *new_hash_map(void);
-void *hash_map_get(struct HashMap *, const char *);
-void hash_map_put(struct HashMap *, const char *, void *);
-void hash_map_delete(struct HashMap *, const char *);
+void *hashmap_get(struct HashMap *, char *);
+void hashmap_put(struct HashMap *, char *, void *);
+void hashmap_delete(struct HashMap *, char *);
 
 #endif
