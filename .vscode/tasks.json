@@ -15,6 +15,27 @@
             "label": "clean",
             "type": "shell",
             "command": "make clean"
+        },
+        {
+            "label": "assembler",
+            "type": "shell",
+            "command": "as -arch x86_64 output.s"
+        },
+        {
+            "label": "link",
+            "type": "shell",
+            "command": "ld a.out",
+            "dependsOn":[
+                "assembler"
+            ]
+        },
+        {
+            "label": "run",
+            "type": "process",
+            "command": "./a.out",
+            "dependsOn":[
+                "link"
+            ]
         }
     ]
 }

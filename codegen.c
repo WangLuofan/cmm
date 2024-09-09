@@ -78,7 +78,11 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
 
             depth = align_to(depth << 3, 16) ?: 16;
 
-            fprintf(fp, "\t%s\t\t%s\n", call(), ((struct ASTNodeFnCall *)expr)->name);
+            #ifdef __APPLE__
+                fprintf(fp, "\t%s\t\t_%s\n", call(), ((struct ASTNodeFnCall *)expr)->name);
+            #else
+                fprintf(fp, "\t%s\t\t%s\n", call(), ((struct ASTNodeFnCall *)expr)->name);
+            #endif
             fprintf(fp, "\t%s\t\t$%d, %s\n", add(8), depth, sp());
         }
             break;
@@ -124,7 +128,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                     
                     const char *reg = allocated_register(4);
                     unallocate_register();
-                    fprintf(fp, "\t%s\t\t%s, %s\n", add(4), reg, allocated_register(4));
+                    fprintf(fp, "\t%s\t\t%s, %s\n", fn(4), reg, allocated_register(4));
                 }
                     break;
             }
