@@ -23,7 +23,7 @@
 }
 
 %left ADD SUB
-%left MUL
+%left MUL DIV
 
 %token <ty> INT VOID CHAR SHORT LONG RETURN
 %token <name> IDENT
@@ -111,6 +111,9 @@ expr: { $$ = NULL; }
     }
     | expr MUL expr {
         $$ = newast_arith(ArithKind_Mul, $1, $3);
+    }
+    | expr DIV expr {
+        $$ = newast_arith(ArithKind_Div, $1, $3);
     }
     | LPARAM expr RPARAM {
         $$ = $2;

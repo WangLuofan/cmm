@@ -10,5 +10,7 @@ const char *pop(void);
 const char *sub(int);
 const char *add(int);
 const char *mul(int);
+const char *div(int);
+const char *clt(int);
 
 #endif

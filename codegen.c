@@ -31,6 +31,8 @@ const char *(*inst(int arith))(int) {
             return sub;
         case ArithKind_Mul:
             return mul;
+        case ArithKind_Div:
+            return div;
     }
 
     return NULL;
@@ -115,12 +117,32 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             switch (expr->right->kind) {
                 case NodeKind_Variable: {
                     struct ASTNodeVar *var = (struct ASTNodeVar *)expr->right;
-                    fprintf(fp, "\t%s\t\t%d(%s), %s\n", fn(var->sym->ty->size), var->sym->offset, bp(), allocated_register(var->sym->ty->size));
+                    switch (arith->kind) {
+                        case ArithKind_Div: {
+                            fprintf(fp, "\t%s\n", clt(4));
+                            fprintf(fp, "\t%s\t\t%d(%s)\n", fn(var->sym->ty->size), var->sym->offset, bp(), allocated_register(var->sym->ty->size));
+                        }
+                            break;
+                        default: {
+                            fprintf(fp, "\t%s\t\t%d(%s), %s\n", fn(var->sym->ty->size), var->sym->offset, bp(), allocated_register(var->sym->ty->size));
+                        }
+                            break;
+                    }
                 }
                     break;
                 case NodeKind_Number: {
                     struct ASTNodeNum *num = (struct ASTNodeNum *)expr->right;
-                    fprintf(fp, "\t%s\t\t$%d, %s\n", fn(sizeof(num->value)), num->value, allocated_register(sizeof(num->value)));
+                    switch (arith->kind) {
+                        case ArithKind_Div: {
+                            fprintf(fp, "\t%s\n", clt(4));
+                            fprintf(fp, "\t%s\t\t$%d\n", fn(sizeof(num->value)), num->value, allocated_register(sizeof(num->value)));
+                        }
+                            break;
+                        default: {
+                            fprintf(fp, "\t%s\t\t$%d, %s\n", fn(sizeof(num->value)), num->value, allocated_register(sizeof(num->value)));
+                        }
+                            break;
+                    }
                 }
                     break;
                 default: {
@@ -128,7 +150,18 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                     
                     const char *reg = allocated_register(4);
                     unallocate_register();
-                    fprintf(fp, "\t%s\t\t%s, %s\n", fn(4), reg, allocated_register(4));
+
+                    switch (arith->kind) {
+                        case ArithKind_Div: {
+                            fprintf(fp, "\t%s\n", clt(4));
+                            fprintf(fp, "\t%s\t\t%s\n", fn(4), reg); 
+                        }
+                            break;
+                        default: {
+                            fprintf(fp, "\t%s\t\t%s, %s\n", fn(4), reg, allocated_register(4));
+                        }
+                            break;
+                    }
                 }
                     break;
             }

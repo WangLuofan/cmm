@@ -62,6 +62,25 @@ const char *mul(int sz) {
     return "imull";
 }
 
+const char *div(int sz) {
+    switch (sz) {
+        case 1:
+            return "idivb";
+        case 2:
+            return "idivw";
+        case 4:
+            return "idivl";
+        case 8:
+            return "idivq";
+    }
+
+    return "idivl";
+}
+
+const char *clt(int sz) {
+    return "cltd";
+}
+
 const char *nop(void) {
     return "nop";
 }
