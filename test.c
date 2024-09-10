@@ -1,5 +1,5 @@
 int fn(int a, int b, int c, int d) {
-	return (a + b) + ((c * d) + (c - d)) + (((c / d) + (c - d)) + (c + d));
+    return (c + d) / (a + b);
 }
 
 int main(void) {

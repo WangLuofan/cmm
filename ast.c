@@ -18,6 +18,7 @@ struct ASTNode *newast_num(int val) {
     struct ASTNodeNum *num = (struct ASTNodeNum *)malloc(sizeof(struct ASTNodeNum));
     num->ast.kind = NodeKind_Number;
     num->value.ival = val;
+    num->ty = copy_type(ty_int);
     return num;
 }
 

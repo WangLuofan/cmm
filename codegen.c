@@ -7,6 +7,8 @@
 #include "codegen.h"
 #include "instruction.h"
 
+#include <string.h>
+
 void prologue(FILE *fp, int stack_size) {
     fprintf(fp, "\tendbr64\n");
     fprintf(fp, "\t%s\t\t%s\n", push(), bp());
@@ -90,7 +92,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             break;
         case NodeKind_Number: {
             struct ASTNodeNum *num = (struct ASTNodeNum *)expr;
-            fprintf(fp, "\t%s\t\t$%d, %s\n", mov(sizeof(num->value.ival)), num->value.ival, ax(sizeof(num->value.ival)));
+            fprintf(fp, "\t%s\t\t$%d, %s\n", mov(num->ty->size), num->value.ival, ax(num->ty->size));
         }
             break;
         case NodeKind_Arith: {
@@ -105,7 +107,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                     break;
                 case NodeKind_Number: {
                     struct ASTNodeNum *num = (struct ASTNodeNum *)expr->left;
-                    fprintf(fp, "\t%s\t\t$%d, %s\n", mov(sizeof(num->value)), num->value, allocate_register(sizeof(num->value)));
+                    fprintf(fp, "\t%s\t\t$%d, %s\n", mov(num->ty->size), num->value, allocate_register(num->ty->size));
                 }
                     break;
                 default: {
@@ -119,12 +121,18 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                     struct ASTNodeVar *var = (struct ASTNodeVar *)expr->right;
                     switch (arith->kind) {
                         case ArithKind_Div: {
-                            fprintf(fp, "\t%s\t\t%s\n", push(), ax(8));
-                            fprintf(fp, "\t%s\t\t%s, %s\n", mov(var->sym->ty->size), allocated_register(var->sym->ty->size), ax(var->sym->ty->size));
+                            if (strcmp(allocated_register(var->sym->ty->size), ax(var->sym->ty->size))) {
+                                fprintf(fp, "\t%s\t\t%s\n", push(), ax(8));
+                                fprintf(fp, "\t%s\t\t%s, %s\n", mov(var->sym->ty->size), allocated_register(var->sym->ty->size), ax(var->sym->ty->size));
+                            }
+                            
                             fprintf(fp, "\t%s\n", clt());
                             fprintf(fp, "\t%s\t\t%d(%s)\n", fn(var->sym->ty->size), var->sym->offset, bp());
-                            fprintf(fp, "\t%s\t\t%s, %s\n", mov(var->sym->ty->size), ax(var->sym->ty->size), allocated_register(var->sym->ty->size));
-                            fprintf(fp, "\t%s\t\t%s\n", pop(), ax(8));
+
+                            if (strcmp(allocated_register(var->sym->ty->size), ax(var->sym->ty->size))) {
+                                fprintf(fp, "\t%s\t\t%s, %s\n", mov(var->sym->ty->size), ax(var->sym->ty->size), allocated_register(var->sym->ty->size));
+                                fprintf(fp, "\t%s\t\t%s\n", pop(), ax(8));
+                            }
                         }
                             break;
                         default: {
@@ -138,16 +146,22 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                     struct ASTNodeNum *num = (struct ASTNodeNum *)expr->right;
                     switch (arith->kind) {
                         case ArithKind_Div: {
-                            fprintf(fp, "\t%s\t\t%s\n", push(), ax(8));
-                            fprintf(fp, "\t%s\t\t%s, %s\n", mov(sizeof(num->value)), allocated_register(sizeof(num->value)), ax(sizeof(num->value)));
+                            if (strcmp(allocated_register(num->ty->size), ax(num->ty->size))) {
+                                fprintf(fp, "\t%s\t\t%s\n", push(), ax(8));
+                                fprintf(fp, "\t%s\t\t%s, %s\n", mov(num->ty->size), allocated_register(num->ty->size), ax(num->ty->size));
+                            }
+
                             fprintf(fp, "\t%s\n", clt());
-                            fprintf(fp, "\t%s\t\t$%d\n", fn(sizeof(num->value)), num->value, allocated_register(sizeof(num->value)));
-                            fprintf(fp, "\t%s\t\t%s, %s\n", mov(sizeof(num->value)), ax(sizeof(num->value)), allocated_register(sizeof(num->value)));
-                            fprintf(fp, "\t%s\t\t%s\n", pop(), ax(8));
+                            fprintf(fp, "\t%s\t\t$%d\n", fn(num->ty->size), num->value, allocated_register(num->ty->size));
+
+                            if (strcmp(allocated_register(num->ty->size), ax(num->ty->size))) {
+                                fprintf(fp, "\t%s\t\t%s, %s\n", mov(num->ty->size), ax(num->ty->size), allocated_register(num->ty->size));
+                                printf(fp, "\t%s\t\t%s\n", pop(), ax(8));
+                            }
                         }
                             break;
                         default: {
-                            fprintf(fp, "\t%s\t\t$%d, %s\n", fn(sizeof(num->value)), num->value, allocated_register(sizeof(num->value)));
+                            fprintf(fp, "\t%s\t\t$%d, %s\n", fn(num->ty->size), num->value, allocated_register(num->ty->size));
                         }
                             break;
                     }
@@ -161,12 +175,18 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
 
                     switch (arith->kind) {
                         case ArithKind_Div: {
-                            fprintf(fp, "\t%s\t\t%s\n", push(), ax(8));
-                            fprintf(fp, "\t%s\t\t%s, %s\n", mov(4), allocated_register(4), ax(4));
+                            if (strcmp(allocated_register(4), ax(4))) {
+                                fprintf(fp, "\t%s\t\t%s\n", push(), ax(8));
+                                fprintf(fp, "\t%s\t\t%s, %s\n", mov(4), allocated_register(4), ax(4));
+                            }
+
                             fprintf(fp, "\t%s\n", clt());
                             fprintf(fp, "\t%s\t\t%s\n", fn(4), reg); 
-                            fprintf(fp, "\t%s\t\t%s, %s\n", mov(4), ax(4), allocated_register(4));
-                            fprintf(fp, "\t%s\t\t%s\n", pop(), ax(8));
+
+                            if (strcmp(allocated_register(4), ax(4))) {
+                                fprintf(fp, "\t%s\t\t%s, %s\n", mov(4), ax(4), allocated_register(4));
+                                printf(fp, "\t%s\t\t%s\n", pop(), ax(8));
+                            }
                         }
                             break;
                         default: {

@@ -25,7 +25,7 @@
 %left ADD SUB
 %left MUL DIV
 
-%token <ty> INT VOID CHAR SHORT LONG RETURN
+%token <ty> INT VOID CHAR SHORT LONG RETURN IF
 %token <name> IDENT
 %token SEMICOLON COMMA EQUAL
 %token <ivar> NUMBER 
@@ -35,7 +35,7 @@
 %type <node> program var_decl variable var_list func_decl
 %type <node> func_param func_param_list call_arg_list
 %type <node> stmt stmt_list
-%type <node> compound_stmt return_stmt
+%type <node> compound_stmt return_stmt if_stmt
 %type <node> expr call_expr
 
 %start accept
@@ -119,11 +119,21 @@ expr: { $$ = NULL; }
         $$ = $2;
     }
 
+if_stmt: IF LPARAM expr RPARAM stmt {
+
+    }
+
 stmt: expr SEMICOLON {
         $$ = newast_node(NodeKind_ExprStmt, $1, NULL);
     }
     | var_decl {
         $$ = $1;
+    }
+    | compound_stmt {
+        $$ = $1
+    }
+    | if_stmt {
+        $$ = $1
     }
     | return_stmt {
         $$ = $1;

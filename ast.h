@@ -18,6 +18,7 @@ typedef enum NodeKind {
     NodeKind_VarDecl,
     NodeKind_Return,
     NodeKind_Arith,
+    NodeKind_IF
 }NodeKind;
 
 typedef enum ArithKind {
@@ -60,6 +61,7 @@ typedef struct ASTNodeList {
 
 typedef struct ASTNodeNum {
     struct ASTNode ast;
+    struct Type *ty;
     union value {
         int ival;
     }value;
