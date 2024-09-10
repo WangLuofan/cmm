@@ -119,8 +119,12 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                     struct ASTNodeVar *var = (struct ASTNodeVar *)expr->right;
                     switch (arith->kind) {
                         case ArithKind_Div: {
-                            fprintf(fp, "\t%s\n", clt(4));
-                            fprintf(fp, "\t%s\t\t%d(%s)\n", fn(var->sym->ty->size), var->sym->offset, bp(), allocated_register(var->sym->ty->size));
+                            fprintf(fp, "\t%s\t\t%s\n", push(), ax(8));
+                            fprintf(fp, "\t%s\t\t%s, %s\n", mov(var->sym->ty->size), allocated_register(var->sym->ty->size), ax(var->sym->ty->size));
+                            fprintf(fp, "\t%s\n", clt());
+                            fprintf(fp, "\t%s\t\t%d(%s)\n", fn(var->sym->ty->size), var->sym->offset, bp());
+                            fprintf(fp, "\t%s\t\t%s, %s\n", mov(var->sym->ty->size), ax(var->sym->ty->size), allocated_register(var->sym->ty->size));
+                            fprintf(fp, "\t%s\t\t%s\n", pop(), ax(8));
                         }
                             break;
                         default: {
@@ -134,8 +138,12 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                     struct ASTNodeNum *num = (struct ASTNodeNum *)expr->right;
                     switch (arith->kind) {
                         case ArithKind_Div: {
-                            fprintf(fp, "\t%s\n", clt(4));
+                            fprintf(fp, "\t%s\t\t%s\n", push(), ax(8));
+                            fprintf(fp, "\t%s\t\t%s, %s\n", mov(sizeof(num->value)), allocated_register(sizeof(num->value)), ax(sizeof(num->value)));
+                            fprintf(fp, "\t%s\n", clt());
                             fprintf(fp, "\t%s\t\t$%d\n", fn(sizeof(num->value)), num->value, allocated_register(sizeof(num->value)));
+                            fprintf(fp, "\t%s\t\t%s, %s\n", mov(sizeof(num->value)), ax(sizeof(num->value)), allocated_register(sizeof(num->value)));
+                            fprintf(fp, "\t%s\t\t%s\n", pop(), ax(8));
                         }
                             break;
                         default: {
@@ -153,8 +161,12 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
 
                     switch (arith->kind) {
                         case ArithKind_Div: {
-                            fprintf(fp, "\t%s\n", clt(4));
+                            fprintf(fp, "\t%s\t\t%s\n", push(), ax(8));
+                            fprintf(fp, "\t%s\t\t%s, %s\n", mov(4), allocated_register(4), ax(4));
+                            fprintf(fp, "\t%s\n", clt());
                             fprintf(fp, "\t%s\t\t%s\n", fn(4), reg); 
+                            fprintf(fp, "\t%s\t\t%s, %s\n", mov(4), ax(4), allocated_register(4));
+                            fprintf(fp, "\t%s\t\t%s\n", pop(), ax(8));
                         }
                             break;
                         default: {

@@ -77,7 +77,7 @@ const char *div(int sz) {
     return "idivl";
 }
 
-const char *clt(int sz) {
+const char *clt(void) {
     return "cltd";
 }
 
