@@ -24,6 +24,7 @@
         "unordered_set": "c",
         "vector": "c",
         "iterator": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "instruction.h": "c"
     }
 }

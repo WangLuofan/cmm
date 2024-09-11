@@ -9,6 +9,10 @@ struct ASTNodeFunction *current_func = NULL;
 struct Symbol *locals = NULL;
 
 void SEM_expr(struct ASTNode *expr) {
+    if (!expr) {
+        return ;
+    }
+
     switch (expr->kind) {
         case NodeKind_Variable: {
             struct ASTNodeVar *var = (struct ASTNodeVar *)expr;
@@ -33,6 +37,10 @@ void SEM_expr(struct ASTNode *expr) {
 }
 
 void SEM_stmt(struct ASTNode *stmt) {
+    if (!stmt) {
+        return ;
+    }
+
     switch (stmt->kind) {
         case NodeKind_CompoundStmt: {
             struct ASTNodeCompoundStmt *compStmt = (struct ASTNodeCompoundStmt *)stmt;
@@ -79,6 +87,14 @@ void SEM_stmt(struct ASTNode *stmt) {
             break;
         case NodeKind_ExprStmt: {
             SEM_expr(stmt->left);
+        }
+            break;
+        case NodeKind_IfStmt: {
+            struct ASTNodeIfStmt *ifstmt = (struct ASTNodeIfStmt *)stmt;
+            SEM_expr(ifstmt->cond);
+
+            SEM_stmt(ifstmt->then);
+            SEM_stmt(ifstmt->els);
         }
             break;
         case NodeKind_Return: {

@@ -160,10 +160,10 @@ stmt: expr SEMICOLON {
         $$ = $1;
     }
     | compound_stmt {
-        $$ = $1
+        $$ = $1;
     }
     | if_stmt {
-        $$ = $1
+        $$ = $1;
     }
     | return_stmt {
         $$ = $1;

@@ -15,7 +15,7 @@ static int inner_index = 0;
 
 const char *unique_label() {
     char *label = (char *)malloc(sizeof(char) * 20);
-    sprintf(label, "LBB%d_%d", func_index, inner_index++);
+    sprintf(label, ".L.%d.%d", func_index, inner_index++);
 
     return label;
 }
@@ -57,6 +57,11 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
     }
 
     switch (expr->kind) {
+        case NodeKind_Variable: {
+            struct ASTNodeVar *var = (struct ASTNodeVar *)expr;
+            fprintf(fp, "\t%s\t\t%d(%s), %s\n", mov(var->sym->ty->size), var->sym->offset, bp(), allocate_register(var->sym->ty->size));
+        }
+            break;
         case NodeKind_FnCall: {
             struct ASTNodeList *args = ((struct ASTNodeList *)(((struct ASTNodeFnCall *)expr)->ast.left))->next;
 
@@ -263,6 +268,10 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
 }
 
 void emit_stmt(FILE *fp, struct ASTNode *stmt) {
+    if (!stmt) {
+        return ;
+    }
+
     switch (stmt->kind) {
         case NodeKind_CompoundStmt: {
             struct ASTNodeCompoundStmt *compoundStmt = (struct ASTNodeCompoundStmt *)stmt;
@@ -296,6 +305,32 @@ void emit_stmt(FILE *fp, struct ASTNode *stmt) {
 
             emit_expr(fp, ifstmt->cond);
 
+            unallocate_register();
+
+            char *els_lbl = unique_label();
+            char *end_lbl = unique_label();
+            switch (ifstmt->cond->kind) {
+                case NodeKind_CompExpr: {
+                    struct ASTNodeCompExpr *comp = (struct ASTNodeCompExpr *)ifstmt->cond;
+
+                    fprintf(fp, "\t%s\t\t\t%s\n", jmp(comp_type(comp->kind)), els_lbl);
+                    emit_stmt(fp, ifstmt->then);
+
+                    fprintf(fp, "\t%s\t\t\t%s\n", jmp(CompInstKindNone), end_lbl);
+
+                    unallocate_register();
+                }
+                    break;
+                default:
+                    break;
+            }
+
+            fprintf(fp, "%s:\n", els_lbl);
+            if (ifstmt->els) {
+                emit_stmt(fp, ifstmt->els);
+            }
+
+            free(els_lbl);
         }
             break;
         case NodeKind_VarDecl: {
@@ -322,7 +357,7 @@ void emit_stmt(FILE *fp, struct ASTNode *stmt) {
             }
 
             emit_expr(fp, stmt->left);
-            unallocate_all();
+            unallocate_register();
         }
             break;
     }

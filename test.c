@@ -3,7 +3,7 @@ int fn(int a, int b, int c, int d) {
         return a;
     }
 
-    return b;
+    return d;
 }
 
 int main(void) {

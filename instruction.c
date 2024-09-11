@@ -115,3 +115,22 @@ const char *push(void) {
 const char *pop(void) {
     return "popq";
 }
+
+const char *jmp(CompInstKind kind) {
+    switch (kind){
+        case CompInstKindLessThan:
+            return "jge";
+        case CompInstKindLessEqual:
+            return "jg";
+        case CompInstKindEqual:
+            return "jne";
+        case CompInstKindNotEqual:
+            return "je";
+        case CompInstKindGreaterThan:
+            return "jle";
+        case CompInstKindGreaterEqual:
+            return "jl";
+    }
+
+    return "jmp";
+}

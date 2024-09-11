@@ -186,6 +186,10 @@ const char *allocated_register(int sz) {
 }
 
 void unallocate_register(void) {
+    if (reg_index <= 0) {
+        return ;
+    }
+
     reg_stack[--reg_index] = 0;
 }
 

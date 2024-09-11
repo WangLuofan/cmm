@@ -97,7 +97,6 @@ typedef struct ASTNodeCompoundStmt {
 
 typedef struct ASTNodeIfStmt {
     struct ASTNode ast;
-    char *label;
     
     struct ASTNode *cond;
     struct ASTNode *then;
