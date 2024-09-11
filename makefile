@@ -15,7 +15,7 @@ type.o: type.h type.c
 ast.o: ast.h type.h ast.c
 	gcc -g -c -o $@ ast.c
 
-codegen.o: ast.h utils.h codegen.c
+codegen.o: ast.h utils.h instruction.h codegen.c
 	gcc -g -c -o $@ codegen.c
 
 utils.o: utils.c utils.h

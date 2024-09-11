@@ -15,7 +15,7 @@ const char *mov(int sz) {
     return "movl";
 }
 
-const char *sub(int sz) {
+const char *isub(int sz) {
     switch (sz)
     {
         case 1:
@@ -31,7 +31,7 @@ const char *sub(int sz) {
     return "subl";
 }
 
-const char *add(int sz) {
+const char *iadd(int sz) {
     switch (sz)
     {
         case 1:
@@ -47,7 +47,7 @@ const char *add(int sz) {
     return "addl";
 }
 
-const char *mul(int sz) {
+const char *imul(int sz) {
     switch (sz) {
         case 1:
             return "imulb";
@@ -62,7 +62,7 @@ const char *mul(int sz) {
     return "imull";
 }
 
-const char *div(int sz) {
+const char *idiv(int sz) {
     switch (sz) {
         case 1:
             return "idivb";
@@ -75,6 +75,21 @@ const char *div(int sz) {
     }
 
     return "idivl";
+}
+
+const char *cmp(int sz) {
+    switch (sz) {
+        case 1:
+            return "cmpb";
+        case 2:
+            return "cmpw";
+        case 4:
+            return "cmpl";
+        case 8:
+            return "cmpq";
+    }
+
+    return "cmpl";
 }
 
 const char *clt(void) {

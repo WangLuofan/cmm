@@ -22,10 +22,12 @@
     struct ASTNode *node;
 }
 
+%left EQ NE
+%left LT LE GT GE
 %left ADD SUB
 %left MUL DIV
 
-%token <ty> INT VOID CHAR SHORT LONG RETURN IF
+%token <ty> INT VOID CHAR SHORT LONG RETURN IF ELSE
 %token <name> IDENT
 %token SEMICOLON COMMA EQUAL
 %token <ivar> NUMBER 
@@ -36,7 +38,7 @@
 %type <node> func_param func_param_list call_arg_list
 %type <node> stmt stmt_list
 %type <node> compound_stmt return_stmt if_stmt
-%type <node> expr call_expr
+%type <node> expr call_expr comp_expr arith_expr
 
 %start accept
 
@@ -93,8 +95,39 @@ func_param_list: func_param {
         $$ = newast_list($1, $3);
     }
 
-expr: { $$ = NULL; }
-    | NUMBER { 
+comp_expr: expr LT expr {
+        $$ = newast_comp_expr(CompKind_LessThan, $1, $3);
+    }
+    | expr LE expr {
+        $$ = newast_comp_expr(CompKind_LessEqual, $1, $3);
+    }
+    | expr GT expr {
+        $$ = newast_comp_expr(CompKind_GreaterThan, $1, $3);
+    }
+    | expr GE expr {
+        $$ = newast_comp_expr(CompKind_GreaterEqual, $1, $3);
+    }
+    | expr EQ expr {
+        $$ = newast_comp_expr(CompKind_Equal, $1, $3);
+    }
+    | expr NE expr {
+        $$ = newast_comp_expr(CompKind_NotEqual, $1, $3);
+    }
+
+arith_expr: expr ADD expr {
+        $$ = newast_arith_expr(ArithKind_Add, $1, $3);
+    }
+    | expr SUB expr {
+        $$ = newast_arith_expr(ArithKind_Sub, $1, $3);
+    }
+    | expr MUL expr {
+        $$ = newast_arith_expr(ArithKind_Mul, $1, $3);
+    }
+    | expr DIV expr {
+        $$ = newast_arith_expr(ArithKind_Div, $1, $3);
+    }
+
+expr: NUMBER { 
         $$ = newast_num($1); 
     }
     | IDENT {
@@ -103,24 +136,21 @@ expr: { $$ = NULL; }
     | call_expr {
         $$ = $1;
     }
-    | expr ADD expr {
-        $$ = newast_arith(ArithKind_Add, $1, $3);
+    | comp_expr {
+        $$ = $1;
     }
-    | expr SUB expr {
-        $$ = newast_arith(ArithKind_Sub, $1, $3);
-    }
-    | expr MUL expr {
-        $$ = newast_arith(ArithKind_Mul, $1, $3);
-    }
-    | expr DIV expr {
-        $$ = newast_arith(ArithKind_Div, $1, $3);
+    | arith_expr {
+        $$ = $1;
     }
     | LPARAM expr RPARAM {
         $$ = $2;
     }
 
 if_stmt: IF LPARAM expr RPARAM stmt {
-
+        $$ = newast_ifstmt($3, $5, NULL);
+    }
+    | IF LPARAM expr RPARAM stmt ELSE stmt {
+        $$ = newast_ifstmt($3, $5, $7);
     }
 
 stmt: expr SEMICOLON {

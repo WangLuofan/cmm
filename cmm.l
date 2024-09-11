@@ -14,6 +14,7 @@
 "long"                                                      { yylval.ty = ty_long; return LONG; }
 "return"                                                    { return RETURN; }
 "if"                                                        { return IF; }
+"else"                                                      { return ELSE; }
 "{"                                                         { return LBRACE; }
 "}"                                                         { return RBRACE; }
 "("                                                         { return LPARAM; }
@@ -27,6 +28,12 @@
 "-"                                                         { return SUB; }
 "*"                                                         { return MUL; }
 "/"                                                         { return DIV; }
+"=="                                                        { return EQ; }
+"!="                                                        { return NE; }
+">"                                                         { return GT; }
+"<"                                                         { return LT; }
+">="                                                        { return GE; }
+"<="                                                        { return LE; }
 
 0|[1-9]+[0-9]*                                              { yylval.ivar = atoi(yytext); return NUMBER; }
 [_a-zA-Z]+[_0-9a-zA-Z]*                                     { strcpy(yylval.name, yytext); return IDENT; }

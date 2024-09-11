@@ -106,16 +106,40 @@ struct ASTNode *newast_compoundstmt(struct ASTNode *stmts) {
     return stmt;
 }
 
-struct ASTNode *newast_arith(ArithKind kind, struct ASTNode *left, struct ASTNode *right) {
-    struct ASTNodeArith *arith = (struct ASTNodeArith *)malloc(sizeof(struct ASTNodeArith));
+struct ASTNode *newast_ifstmt(struct ASTNode *cond, struct ASTNode *then, struct ASTNode *els) {
+    struct ASTNodeIfStmt *stmt = (struct ASTNodeIfStmt *)malloc(sizeof(struct ASTNodeIfStmt));
+
+    stmt->ast.kind = NodeKind_IfStmt;
+
+    stmt->cond = cond;
+    stmt->then = then;
+    stmt->els = els;
+
+    return stmt;
+}
+
+struct ASTNode *newast_arith_expr(ArithKind kind, struct ASTNode *left, struct ASTNode *right) {
+    struct ASTNodeArithExpr *arith = (struct ASTNodeArithExpr *)malloc(sizeof(struct ASTNodeArithExpr));
 
     arith->kind = kind;
-    arith->ast.kind = NodeKind_Arith;
+    arith->ast.kind = NodeKind_ArithExpr;
     arith->ast.left = left;
     arith->ast.right = right;
 
     return arith;
 }
+
+struct ASTNode *newast_comp_expr(CompKind kind, struct ASTNode *left, struct ASTNode *right) {
+    struct ASTNodeCompExpr *comp = (struct ASTNodeCompExpr *)malloc(sizeof(struct ASTNodeCompExpr));
+
+    comp->kind = kind;
+    comp->ast.kind = NodeKind_CompExpr;
+    comp->ast.left = left;
+    comp->ast.right = right;
+
+    return comp;
+}
+
 
 struct ASTNode *merge_list(struct ASTNodeList *list1, struct ASTNodeList *list2) {
 

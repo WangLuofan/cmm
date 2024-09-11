@@ -7,10 +7,11 @@ const char *call(void);
 const char *ret(void);
 const char *push(void);
 const char *pop(void);
-const char *sub(int);
-const char *add(int);
-const char *mul(int);
-const char *div(int);
+const char *isub(int);
+const char *iadd(int);
+const char *imul(int);
+const char *idiv(int);
 const char *clt(void);
+const char *cmp(int);
 
 #endif

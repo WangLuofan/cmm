@@ -1,5 +1,9 @@
 int fn(int a, int b, int c, int d) {
-    return (c + d) / (a + b);
+    if (a > b) {
+        return a;
+    }
+
+    return b;
 }
 
 int main(void) {

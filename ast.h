@@ -17,8 +17,9 @@ typedef enum NodeKind {
     NodeKind_ExprStmt,
     NodeKind_VarDecl,
     NodeKind_Return,
-    NodeKind_Arith,
-    NodeKind_IF
+    NodeKind_ArithExpr,
+    NodeKind_CompExpr,
+    NodeKind_IfStmt,
 }NodeKind;
 
 typedef enum ArithKind {
@@ -27,6 +28,15 @@ typedef enum ArithKind {
     ArithKind_Mul,
     ArithKind_Div,
 }ArithKind;
+
+typedef enum CompKind {
+    CompKind_LessThan,
+    CompKind_LessEqual,
+    CompKind_GreaterThan,
+    CompKind_GreaterEqual,
+    CompKind_Equal,
+    CompKind_NotEqual
+}CompKind;
 
 typedef struct ASTNode {
     NodeKind kind;
@@ -85,18 +95,33 @@ typedef struct ASTNodeCompoundStmt {
     struct ASTNode *fn;
 }ASTNodeCompoundStmt;
 
-typedef struct ASTNodeArith {
+typedef struct ASTNodeIfStmt {
     struct ASTNode ast;
+    char *label;
+    
+    struct ASTNode *cond;
+    struct ASTNode *then;
+    struct ASTNode *els;
+}ASTNodeIfStmt;
 
+typedef struct ASTNodeArithExpr {
+    struct ASTNode ast;
     ArithKind kind;
-}ASTNodeArith;
+}ASTNodeArithExpr;
+
+typedef struct ASTNodeCompExpr {
+    struct ASTNode ast;
+    CompKind kind;
+}ASTNodeCompExpr;
 
 struct ASTNode *newast_node(NodeKind, struct ASTNode *, struct ASTNode *);
-struct ASTNode *newast_arith(ArithKind, struct ASTNode *, struct ASTNode *);
+struct ASTNode *newast_arith_expr(ArithKind, struct ASTNode *, struct ASTNode *);
+struct ASTNode *newast_comp_expr(CompKind, struct ASTNode *, struct ASTNode *);
 struct ASTNode *newast_list(struct ASTNodeList *, struct ASTNode *);
 struct ASTNode *newast_var(char *, struct Type *, struct ASTNode *);
 struct ASTNode *newast_num(int);
 struct ASTNode *newast_compoundstmt(struct ASTNode *);
+struct ASTNode *newast_ifstmt(struct ASTNode *, struct ASTNode *, struct ASTNode *);
 struct ASTNode *newast_vardecl(struct Type *, struct ASTNode *);
 struct ASTNode *newast_function(struct Type *, const char *, struct ASTNode *, struct ASTNode *);
 struct ASTNode *newast_fncall(const char *, struct ASTNode *);
