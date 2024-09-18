@@ -153,7 +153,10 @@ if_stmt: IF LPARAM expr RPARAM stmt {
         $$ = newast_ifstmt($3, $5, $7);
     }
 
-stmt: expr SEMICOLON {
+stmt: SEMICOLON { 
+        $$ = NULL 
+    }
+    | expr SEMICOLON {
         $$ = newast_node(NodeKind_ExprStmt, $1, NULL);
     }
     | var_decl {

@@ -15,10 +15,15 @@ int is_const_expr(struct ASTNode *node) {
         }
             break;
         case NodeKind_Variable: {
-            struct ASTNodeVar *var = (struct ASTNodeVar *)node;
-            return is_const_expr(var->ast.right);
+            return is_const_expr(node->left);
         }
             break;
+        case NodeKind_ArithExpr: {
+            return is_const_expr(node->left) && is_const_expr(node->right);
+        }
+        case NodeKind_CompExpr: {
+            return is_const_expr(node->left) && is_const_expr(node->right);
+        }
         default: {
             is_const = 0;
         }
