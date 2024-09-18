@@ -31,6 +31,7 @@ void prologue(FILE *fp, int stack_size) {
 }
 
 void epilogue(FILE *fp) {
+    fprintf(fp, ".L.return.%d:\n", func_index);
     fprintf(fp, "\t%s\t\t%s, %s\n", mov(8), bp(), sp());
     fprintf(fp, "\t%s\t\t%s\n", pop(), bp());
     fprintf(fp, "\t%s\n", ret());
@@ -244,12 +245,12 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             switch (expr->right->kind) {
                 case NodeKind_Number: {
                     struct ASTNodeNum *num = (struct ASTNodeNum *)expr->right;
-                    fprintf(fp, "\t%s\t\t%s, $%d\n", cmp(num->ty->size), allocated_register(num->ty->size), num->value.ival);
+                    fprintf(fp, "\t%s\t\t$%d, %s\n", cmp(num->ty->size), num->value.ival, allocated_register(num->ty->size));
                 }
                     break;
                 case NodeKind_Variable: {
                     struct ASTNodeVar *var = (struct ASTNodeVar *)expr->right;
-                    fprintf(fp, "\t%s\t\t%s, %d(%s)\n", cmp(var->sym->ty->size), allocated_register(var->sym->ty->size), var->sym->offset, bp());
+                    fprintf(fp, "\t%s\t\t%d(%s), %s\n", cmp(var->sym->ty->size), var->sym->offset, bp(), allocated_register(var->sym->ty->size));
                 }
                     break;
                 default: {
@@ -258,7 +259,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                     const char *reg = allocated_register(4);
                     unallocate_register();
 
-                    fprintf(fp, "\t%s\t\t%s, %s\n", cmp(4), reg, allocated_register(4));
+                    fprintf(fp, "\t%s\t\t%s, %s\n", cmp(4), allocated_register(4), reg);
                 }
                     break;
             }
@@ -308,16 +309,12 @@ void emit_stmt(FILE *fp, struct ASTNode *stmt) {
             unallocate_register();
 
             char *els_lbl = unique_label();
-            char *end_lbl = unique_label();
             switch (ifstmt->cond->kind) {
                 case NodeKind_CompExpr: {
                     struct ASTNodeCompExpr *comp = (struct ASTNodeCompExpr *)ifstmt->cond;
 
                     fprintf(fp, "\t%s\t\t\t%s\n", jmp(comp_type(comp->kind)), els_lbl);
                     emit_stmt(fp, ifstmt->then);
-
-                    fprintf(fp, "\t%s\t\t\t%s\n", jmp(CompInstKindNone), end_lbl);
-
                     unallocate_register();
                 }
                     break;
@@ -329,8 +326,6 @@ void emit_stmt(FILE *fp, struct ASTNode *stmt) {
             if (ifstmt->els) {
                 emit_stmt(fp, ifstmt->els);
             }
-
-            free(els_lbl);
         }
             break;
         case NodeKind_VarDecl: {
@@ -358,6 +353,7 @@ void emit_stmt(FILE *fp, struct ASTNode *stmt) {
 
             emit_expr(fp, stmt->left);
             unallocate_register();
+            fprintf(fp, "\t%s\t\t\t.L.return.%d\n", jmp(CompInstKindNone), func_index);
         }
             break;
     }
