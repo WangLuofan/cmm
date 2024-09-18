@@ -268,6 +268,10 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
     }
 }
 
+void gen_comp_expr(FILE *fp) {
+    fprintf(fp, "\t%s\t\t$%d, %s\n", cmp(4), 0, ax(4));
+}
+
 void emit_stmt(FILE *fp, struct ASTNode *stmt) {
     if (!stmt) {
         return ;
@@ -312,15 +316,18 @@ void emit_stmt(FILE *fp, struct ASTNode *stmt) {
             switch (ifstmt->cond->kind) {
                 case NodeKind_CompExpr: {
                     struct ASTNodeCompExpr *comp = (struct ASTNodeCompExpr *)ifstmt->cond;
-
                     fprintf(fp, "\t%s\t\t\t%s\n", jmp(comp_type(comp->kind)), els_lbl);
-                    emit_stmt(fp, ifstmt->then);
-                    unallocate_register();
                 }
                     break;
-                default:
+                default: {
+                    gen_comp_expr(fp);
+                    fprintf(fp, "\t%s\t\t\t%s\n", jmp(CompInstKindNotEqual), els_lbl);
+                }
                     break;
             }
+
+            emit_stmt(fp, ifstmt->then);
+            unallocate_register();
 
             fprintf(fp, "%s:\n", els_lbl);
             if (ifstmt->els) {
