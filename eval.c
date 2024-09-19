@@ -9,7 +9,7 @@ int eval(struct ASTNode *expr) {
     
     switch (expr->kind) {
         case NodeKind_Number:
-            return ((struct ASTNodeNum *)expr)->value.ival;
+            return ((struct ASTNodeNum *)expr)->val.ival;
         case NodeKind_Variable:
             return eval(expr->right);
         case NodeKind_ArithExpr: {

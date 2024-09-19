@@ -34,6 +34,9 @@
 "<"                                                         { return LT; }
 ">="                                                        { return GE; }
 "<="                                                        { return LE; }
+"&&"                                                        { return LOGICALAND; }
+"||"                                                        { return LOGICALOR; }
+"!"                                                         { return LOGICALNOT; }
 
 0|[1-9]+[0-9]*                                              { yylval.ivar = atoi(yytext); return NUMBER; }
 [_a-zA-Z]+[_0-9a-zA-Z]*                                     { strcpy(yylval.name, yytext); return IDENT; }

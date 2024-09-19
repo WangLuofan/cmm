@@ -22,10 +22,12 @@
     struct ASTNode *node;
 }
 
+%left LOGICALAND LOGICALOR
 %left EQ NE
 %left LT LE GT GE
 %left ADD SUB
 %left MUL DIV
+%right LOGICALNOT
 
 %token <ty> INT VOID CHAR SHORT LONG RETURN IF ELSE
 %token <name> IDENT
@@ -38,7 +40,7 @@
 %type <node> func_param func_param_list call_arg_list
 %type <node> stmt stmt_list
 %type <node> compound_stmt return_stmt if_stmt
-%type <node> expr call_expr comp_expr arith_expr
+%type <node> expr call_expr comp_expr arith_expr logical_expr
 
 %start accept
 
@@ -66,7 +68,7 @@ variable: IDENT {
         $$ = newast_var($1, NULL, NULL);
     }
     | IDENT EQUAL NUMBER {
-        $$ = newast_var($1, NULL, newast_num($3));
+        $$ = newast_var($1, NULL, newast_num(ty_int, (union Value){ .ival = $3 }));
     }
 
 var_list: variable {
@@ -127,8 +129,18 @@ arith_expr: expr ADD expr {
         $$ = newast_arith_expr(ArithKind_Div, $1, $3);
     }
 
+logical_expr: expr LOGICALAND expr {
+        $$ = newast_logical_expr(LogicalKind_And, $1, $3);
+    }
+    | expr LOGICALOR expr {
+        $$ = newast_logical_expr(LogicalKind_Or, $1, $3);
+    }
+    | LOGICALNOT expr {
+        $$ = newast_logical_expr(LogicalKind_Not, $2, NULL);
+    }
+
 expr: NUMBER { 
-        $$ = newast_num($1); 
+        $$ = newast_num(ty_int, (union Value){ .ival = $1 }); 
     }
     | IDENT {
         $$ = newast_var($1, NULL, NULL);
@@ -140,6 +152,9 @@ expr: NUMBER {
         $$ = $1;
     }
     | arith_expr {
+        $$ = $1;
+    }
+    | logical_expr {
         $$ = $1;
     }
     | LPARAM expr RPARAM {
@@ -154,7 +169,7 @@ if_stmt: IF LPARAM expr RPARAM stmt {
     }
 
 stmt: SEMICOLON { 
-        $$ = NULL 
+        $$ = NULL;
     }
     | expr SEMICOLON {
         $$ = newast_node(NodeKind_ExprStmt, $1, NULL);

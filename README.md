@@ -26,4 +26,4 @@ C Minus Minus Compiler
 2. 添加微量平台特征代码
 
 ## 2024/09/18
-1. 支持if/else语句
+1. 支持算术表达式

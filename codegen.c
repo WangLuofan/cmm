@@ -109,7 +109,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             break;
         case NodeKind_Number: {
             struct ASTNodeNum *num = (struct ASTNodeNum *)expr;
-            fprintf(fp, "\t%s\t\t$%d, %s\n", mov(num->ty->size), num->value.ival, ax(num->ty->size));
+            fprintf(fp, "\t%s\t\t$%d, %s\n", mov(num->ty->size), num->val.ival, ax(num->ty->size));
         }
             break;
         case NodeKind_ArithExpr: {
@@ -124,7 +124,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                     break;
                 case NodeKind_Number: {
                     struct ASTNodeNum *num = (struct ASTNodeNum *)expr->left;
-                    fprintf(fp, "\t%s\t\t$%d, %s\n", mov(num->ty->size), num->value, allocate_register(num->ty->size));
+                    fprintf(fp, "\t%s\t\t$%d, %s\n", mov(num->ty->size), num->val.ival, allocate_register(num->ty->size));
                 }
                     break;
                 default: {
@@ -169,7 +169,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                             }
 
                             fprintf(fp, "\t%s\n", clt());
-                            fprintf(fp, "\t%s\t\t$%d\n", fn(num->ty->size), num->value, allocated_register(num->ty->size));
+                            fprintf(fp, "\t%s\t\t$%d\n", fn(num->ty->size), num->val.ival, allocated_register(num->ty->size));
 
                             if (strcmp(allocated_register(num->ty->size), ax(num->ty->size))) {
                                 fprintf(fp, "\t%s\t\t%s, %s\n", mov(num->ty->size), ax(num->ty->size), allocated_register(num->ty->size));
@@ -178,7 +178,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
                         }
                             break;
                         default: {
-                            fprintf(fp, "\t%s\t\t$%d, %s\n", fn(num->ty->size), num->value, allocated_register(num->ty->size));
+                            fprintf(fp, "\t%s\t\t$%d, %s\n", fn(num->ty->size), num->val.ival, allocated_register(num->ty->size));
                         }
                             break;
                     }
@@ -228,7 +228,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             switch (expr->left->kind) {
                 case NodeKind_Number: {
                     struct ASTNodeNum *num = (struct ASTNodeNum *)expr->left;
-                    fprintf(fp, "\t%s\t\t$%d, %s\n", mov(num->ty->size), num->value.ival, allocate_register(num->ty->size));
+                    fprintf(fp, "\t%s\t\t$%d, %s\n", mov(num->ty->size), num->val.ival, allocate_register(num->ty->size));
                 }
                     break;
                 case NodeKind_Variable: {
@@ -245,7 +245,7 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             switch (expr->right->kind) {
                 case NodeKind_Number: {
                     struct ASTNodeNum *num = (struct ASTNodeNum *)expr->right;
-                    fprintf(fp, "\t%s\t\t$%d, %s\n", cmp(num->ty->size), num->value.ival, allocated_register(num->ty->size));
+                    fprintf(fp, "\t%s\t\t$%d, %s\n", cmp(num->ty->size), num->val.ival, allocated_register(num->ty->size));
                 }
                     break;
                 case NodeKind_Variable: {
@@ -514,7 +514,7 @@ void emit_data(FILE *fp, struct ASTNode *prog) {
                 switch (var->ast.right->kind) {
                     case NodeKind_Number: {
                         struct ASTNodeNum *num = (struct ASTNodeNum *)var->ast.right;
-                        fprintf(fp, "   \t.long\t\t%llu\n", num->value.ival);
+                        fprintf(fp, "   \t.long\t\t%llu\n", num->val.ival);
                     }
                         break;
                 }

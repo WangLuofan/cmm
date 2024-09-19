@@ -14,10 +14,10 @@ struct ASTNode *newast_node(NodeKind kind, struct ASTNode *left, struct ASTNode 
     return ast;
 }
 
-struct ASTNode *newast_num(int val) {
+struct ASTNode *newast_num(struct Type *ty, union Value v) {
     struct ASTNodeNum *num = (struct ASTNodeNum *)malloc(sizeof(struct ASTNodeNum));
     num->ast.kind = NodeKind_Number;
-    num->value.ival = val;
+    num->val = v;
     num->ty = copy_type(ty_int);
     return num;
 }
@@ -140,6 +140,16 @@ struct ASTNode *newast_comp_expr(CompKind kind, struct ASTNode *left, struct AST
     return comp;
 }
 
+struct ASTNode *newast_logical_expr(LogicalKind kind, struct ASTNode * left, struct ASTNode *right) {
+    struct ASTNodeLogicalExpr *logical = (struct ASTNodeLogicalExpr *)malloc(sizeof(struct ASTNodeLogicalExpr));
+
+    logical->kind = kind;
+    logical->ast.kind = NodeKind_LogicalExpr;
+    logical->ast.left = left;
+    logical->ast.right = right;
+
+    return logical;
+}
 
 struct ASTNode *merge_list(struct ASTNodeList *list1, struct ASTNodeList *list2) {
 

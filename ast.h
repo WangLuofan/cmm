@@ -18,6 +18,7 @@ typedef enum NodeKind {
     NodeKind_VarDecl,
     NodeKind_Return,
     NodeKind_ArithExpr,
+    NodeKind_LogicalExpr,
     NodeKind_CompExpr,
     NodeKind_IfStmt,
 }NodeKind;
@@ -37,6 +38,12 @@ typedef enum CompKind {
     CompKind_Equal,
     CompKind_NotEqual
 }CompKind;
+
+typedef enum LogicalKind {
+    LogicalKind_And,
+    LogicalKind_Or,
+    LogicalKind_Not
+}LogicalKind;
 
 typedef struct ASTNode {
     NodeKind kind;
@@ -69,12 +76,14 @@ typedef struct ASTNodeList {
     struct ASTNodeList *next;
 }ASTNodeList;
 
+union Value {
+    int ival;
+};
+
 typedef struct ASTNodeNum {
     struct ASTNode ast;
     struct Type *ty;
-    union value {
-        int ival;
-    }value;
+    union Value val;
     
 }ASTNodeNum;
 
@@ -113,12 +122,18 @@ typedef struct ASTNodeCompExpr {
     CompKind kind;
 }ASTNodeCompExpr;
 
+typedef struct ASTNodeLogicalExpr {
+    struct ASTNode ast;
+    LogicalKind kind;
+}ASTNodeLogicalExpr;
+
 struct ASTNode *newast_node(NodeKind, struct ASTNode *, struct ASTNode *);
+struct ASTNode *newast_logical_expr(LogicalKind, struct ASTNode *, struct ASTNode *);
 struct ASTNode *newast_arith_expr(ArithKind, struct ASTNode *, struct ASTNode *);
 struct ASTNode *newast_comp_expr(CompKind, struct ASTNode *, struct ASTNode *);
 struct ASTNode *newast_list(struct ASTNodeList *, struct ASTNode *);
 struct ASTNode *newast_var(char *, struct Type *, struct ASTNode *);
-struct ASTNode *newast_num(int);
+struct ASTNode *newast_num(struct Type *, union Value);
 struct ASTNode *newast_compoundstmt(struct ASTNode *);
 struct ASTNode *newast_ifstmt(struct ASTNode *, struct ASTNode *, struct ASTNode *);
 struct ASTNode *newast_vardecl(struct Type *, struct ASTNode *);
