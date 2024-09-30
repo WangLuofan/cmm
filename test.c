@@ -1,5 +1,5 @@
 int fn(int a, int b, int c, int d) {
-    if (a && b) {
+	if ((a && b) || (c && d)) {
         return a + b;
     }
 

@@ -116,20 +116,20 @@ const char *pop(void) {
     return "popq";
 }
 
-const char *jmp(CompInstKind kind) {
-    switch (kind){
+const char *jmp(CompInstKind kind, int reverse) {
+    switch (kind) {
         case CompInstKindLessThan:
-            return "jge";
+            return reverse ? "jge" : "jl";
         case CompInstKindLessEqual:
-            return "jg";
+            return reverse ? "jg" : "jle";
         case CompInstKindEqual:
-            return "jne";
+            return reverse ? "jne" : "je";
         case CompInstKindNotEqual:
-            return "je";
+            return reverse ? "je" : "jne";
         case CompInstKindGreaterThan:
-            return "jle";
+            return reverse ? "jle" : "jg";
         case CompInstKindGreaterEqual:
-            return "jl";
+            return reverse ? "jl" : "jge";
     }
 
     return "jmp";

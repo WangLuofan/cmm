@@ -52,6 +52,21 @@ const char *(*inst(int arith))(int) {
     return NULL;
 }
 
+void comp_zero(FILE *fp, struct ASTNode *expr) {
+    switch (expr->kind) {
+        case NodeKind_CompExpr: {
+            return ;
+        }
+            break;
+        default:
+            fprintf(fp, "\t%s\t\t$%d, %s\n", cmp(4), 0, allocated_register(4));
+            break;
+    }
+    
+    unallocate_register();
+    return ;
+}
+
 void emit_expr(FILE *fp, struct ASTNode *expr) {
     if (!expr) {
         return ;
@@ -265,11 +280,53 @@ void emit_expr(FILE *fp, struct ASTNode *expr) {
             }
         }
             break;
-    }
-}
+        case NodeKind_LogicalExpr: {
+            struct ASTNodeLogicalExpr *logicalExpr = (struct ASTNodeLogicalExpr *)expr;
+            switch (logicalExpr->kind) {
+                case LogicalKind_And: {
+                    logicalExpr->ast.trues = unique_label();
+                    logicalExpr->ast.falses = unique_label();
 
-void gen_comp_expr(FILE *fp) {
-    fprintf(fp, "\t%s\t\t$%d, %s\n", cmp(4), 0, ax(4));
+                    emit_expr(fp, logicalExpr->ast.left);
+                    comp_zero(fp, logicalExpr->ast.left);
+
+                    fprintf(fp, "\t%s\t\t\t%s\n", jmp(CompInstKindEqual, 0), logicalExpr->ast.falses);
+
+                    if (logicalExpr->ast.left->trues) {
+                        fprintf(fp, "%s:\n", logicalExpr->ast.left->trues);
+                    }
+                    emit_expr(fp, logicalExpr->ast.right);
+                    comp_zero(fp, logicalExpr->ast.right);
+
+                    fprintf(fp, "\t%s\t\t\t%s\n", jmp(CompInstKindEqual, 1), logicalExpr->ast.falses);
+                }
+                    break;
+                case LogicalKind_Or: {
+                    logicalExpr->ast.trues = unique_label();
+                    logicalExpr->ast.falses = unique_label();
+
+                    emit_expr(fp, logicalExpr->ast.left);
+                    comp_zero(fp, logicalExpr->ast.left);
+
+                    fprintf(fp, "\t%s\t\t\t%s\n", jmp(CompInstKindEqual, 1), logicalExpr->ast.trues);
+
+                    if (logicalExpr->ast.left->falses) {
+                        fprintf(fp, "%s:\n", logicalExpr->ast.left->falses);
+                    }
+                    emit_expr(fp, logicalExpr->ast.right);
+                    comp_zero(fp, logicalExpr->ast.right);
+
+                    fprintf(fp, "\t%s\t\t\t%s\n", jmp(CompInstKindEqual, 0), logicalExpr->ast.falses);
+                }
+                    break;
+                case LogicalKind_Not: {
+
+                }
+                    break;
+            }
+        }
+            break;
+    }
 }
 
 void emit_stmt(FILE *fp, struct ASTNode *stmt) {
@@ -310,26 +367,11 @@ void emit_stmt(FILE *fp, struct ASTNode *stmt) {
 
             emit_expr(fp, ifstmt->cond);
 
-            unallocate_register();
-
-            char *els_lbl = unique_label();
-            switch (ifstmt->cond->kind) {
-                case NodeKind_CompExpr: {
-                    struct ASTNodeCompExpr *comp = (struct ASTNodeCompExpr *)ifstmt->cond;
-                    fprintf(fp, "\t%s\t\t\t%s\n", jmp(comp_type(comp->kind)), els_lbl);
-                }
-                    break;
-                default: {
-                    gen_comp_expr(fp);
-                    fprintf(fp, "\t%s\t\t\t%s\n", jmp(CompInstKindNotEqual), els_lbl);
-                }
-                    break;
-            }
-
+            fprintf(fp, "%s:\n", ifstmt->cond->trues);
             emit_stmt(fp, ifstmt->then);
             unallocate_register();
 
-            fprintf(fp, "%s:\n", els_lbl);
+            fprintf(fp, "%s:\n", ifstmt->cond->falses);
             if (ifstmt->els) {
                 emit_stmt(fp, ifstmt->els);
             }
@@ -360,7 +402,7 @@ void emit_stmt(FILE *fp, struct ASTNode *stmt) {
 
             emit_expr(fp, stmt->left);
             unallocate_register();
-            fprintf(fp, "\t%s\t\t\t.L.return.%d\n", jmp(CompInstKindNone), func_index);
+            fprintf(fp, "\t%s\t\t\t.L.return.%d\n", jmp(CompInstKindNone, 1), func_index);
         }
             break;
     }

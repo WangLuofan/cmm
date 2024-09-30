@@ -5,6 +5,10 @@
 
 #include "type.h"
 
+typedef struct patchList {
+    char *label;
+}patchList;
+
 typedef struct Symbol;
 typedef enum NodeKind {
     NodeKind_NullExpr,
@@ -50,6 +54,9 @@ typedef struct ASTNode {
 
     struct ASTNode *left;
     struct ASTNode *right;
+
+    struct patchList *trues;
+    struct patchList *falses;
 }ASTNode;
 
 typedef struct ASTNodeVar {
@@ -124,6 +131,7 @@ typedef struct ASTNodeCompExpr {
 
 typedef struct ASTNodeLogicalExpr {
     struct ASTNode ast;
+
     LogicalKind kind;
 }ASTNodeLogicalExpr;
 

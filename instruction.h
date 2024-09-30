@@ -23,6 +23,6 @@ const char *imul(int);
 const char *idiv(int);
 const char *clt(void);
 const char *cmp(int);
-const char *jmp(CompInstKind);
+const char *jmp(CompInstKind, int);
 
 #endif

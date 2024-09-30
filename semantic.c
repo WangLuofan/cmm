@@ -33,6 +33,11 @@ void SEM_expr(struct ASTNode *expr) {
             SEM_expr(expr->right);
         }
             break;
+        case NodeKind_LogicalExpr: {
+            SEM_expr(expr->left);
+            SEM_expr(expr->right);
+        }
+            break;
     }
 }
 
